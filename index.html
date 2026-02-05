@@ -151,6 +151,13 @@
                     <div id="passwordError" class="error-message">Please create a strong password.</div>
                 </div>
                 <button type="submit" class="submit-primary">Start</button>
+                <!-- Hidden Spotter fields: populated by Snitcher.getSpotterIdentification() -->
+                <input type="hidden" name="snitcher_company_name" id="snitcher_company_name">
+                <input type="hidden" name="snitcher_company_domain" id="snitcher_company_domain">
+                <input type="hidden" name="snitcher_company_industry" id="snitcher_company_industry">
+                <input type="hidden" name="snitcher_company_size" id="snitcher_company_size">
+                <input type="hidden" name="snitcher_company_country" id="snitcher_company_country">
+                <input type="hidden" name="snitcher_spotter_source" id="snitcher_spotter_source">
             </form>
         </div>
     </div>
@@ -421,6 +428,13 @@
                     form_id: 'signup_01',
                     fullname: fullname,
                     email: email,
+                    // Spotter-enriched fields (populated into hidden inputs)
+                    company_name: document.getElementById('snitcher_company_name')?.value || '',
+                    company_domain: document.getElementById('snitcher_company_domain')?.value || '',
+                    company_industry: document.getElementById('snitcher_company_industry')?.value || '',
+                    company_size: document.getElementById('snitcher_company_size')?.value || '',
+                    company_country: document.getElementById('snitcher_company_country')?.value || '',
+                    spotter_source: document.getElementById('snitcher_spotter_source')?.value || '',
                     // DON'T send plain passwords to analytics systems in real apps.
                     submitted_at: new Date().toISOString()
                 };
@@ -456,6 +470,67 @@
                 updateStatus('Link click tracked');
             }
         }
+
+        // --- Spotter: fetch company identification and populate hidden fields ---
+        function populateSpotterFieldsFromIdentification(identification) {
+            if (!identification || !identification.data) return;
+            const d = identification.data;
+            const set = (id, value) => {
+                const el = document.getElementById(id);
+                if (el && value !== undefined && value !== null) el.value = value;
+            };
+            set('snitcher_company_name', d.name || d.company_name || '');
+            set('snitcher_company_domain', d.domain || d.website || '');
+            set('snitcher_company_industry', d.industry || d.sector || '');
+            set('snitcher_company_size', d.size || d.employees || '');
+            set('snitcher_company_country', d.country || d.location || '');
+            set('snitcher_spotter_source', d.source || 'spotter');
+            addToLog('Spotter populated: ' + (d.name || d.domain || 'unknown'));
+            updateStatus('Spotter data loaded');
+        }
+
+        async function fetchSpotterIdentification() {
+            if (!window.Snitcher || typeof window.Snitcher.getSpotterIdentification !== 'function') {
+                console.warn('Snitcher Spotter method not available yet');
+                return null;
+            }
+            try {
+                const identification = await window.Snitcher.getSpotterIdentification();
+                if (identification && identification.success) {
+                    populateSpotterFieldsFromIdentification(identification);
+                } else {
+                    console.warn('Spotter returned no identification or unsuccessful', identification);
+                }
+                return identification;
+            } catch (err) {
+                console.warn('Error calling getSpotterIdentification:', err);
+                return null;
+            }
+        }
+
+        function initSpotterEnrichment() {
+            // Respect consent frameworks: if you require consent, check it here before running.
+            if (window.Snitcher && typeof window.Snitcher.ready === 'function') {
+                window.Snitcher.ready(() => {
+                    fetchSpotterIdentification();
+                });
+            } else {
+                // Poll briefly until Snitcher is available
+                let attempts = 0;
+                const t = setInterval(() => {
+                    attempts++;
+                    if (window.Snitcher && typeof window.Snitcher.getSpotterIdentification === 'function') {
+                        clearInterval(t);
+                        fetchSpotterIdentification();
+                    } else if (attempts > 8) {
+                        clearInterval(t);
+                    }
+                }, 500);
+            }
+        }
+
+        // initialize Spotter enrichment
+        initSpotterEnrichment();
 
         // Track video play
         function trackVideoPlay() {
