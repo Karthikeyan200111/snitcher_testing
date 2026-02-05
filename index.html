@@ -22,6 +22,46 @@
     "namespace": "Snitcher",
     "profileId": "sfwS6T7E0r"
     });
+        // After the tracker bootstrap is set up, request Spotter identification when tracker is ready.
+        (function(){
+            try{
+                if (window.Snitcher && typeof window.Snitcher.ready === 'function') {
+                    window.Snitcher.ready(async function(){
+                        try{
+                            // If the promise API exists, use it; otherwise poll for it briefly
+                            if (typeof window.Snitcher.getSpotterIdentification === 'function'){
+                                const ident = await window.Snitcher.getSpotterIdentification();
+                                console.log('Spotter (inline ready):', ident);
+                                if (ident && ident.success && typeof populateSpotterFieldsFromIdentification === 'function'){
+                                    populateSpotterFieldsFromIdentification(ident);
+                                } else if (ident && ident.type && window.SpotterSettings && typeof window.SpotterSettings.callback === 'function'){
+                                    // legacy callback shape
+                                    window.SpotterSettings.callback(ident);
+                                }
+                                return;
+                            }
+                            // fallback: poll for the method up to ~4s
+                            var tries = 0;
+                            var iv = setInterval(async function(){
+                                tries++;
+                                if (typeof window.Snitcher.getSpotterIdentification === 'function'){
+                                    clearInterval(iv);
+                                    try{
+                                        const ident = await window.Snitcher.getSpotterIdentification();
+                                        console.log('Spotter (inline poll):', ident);
+                                        if (ident && ident.success && typeof populateSpotterFieldsFromIdentification === 'function'){
+                                            populateSpotterFieldsFromIdentification(ident);
+                                        } else if (ident && ident.type && window.SpotterSettings && typeof window.SpotterSettings.callback === 'function'){
+                                            window.SpotterSettings.callback(ident);
+                                        }
+                                    }catch(e){ console.warn('Spotter poll error', e); }
+                                } else if (tries>8) { clearInterval(iv); }
+                            }, 500);
+                        }catch(e){ console.warn('Spotter ready handler error', e); }
+                    });
+                }
+            }catch(e){ console.warn('Spotter inline init failed', e); }
+        })();
     </script>
 <!-- Leadinfo tracking code -->
 
