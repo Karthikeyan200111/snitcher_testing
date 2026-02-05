@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Welcome to our website. Discover quality content and services tailored for you.">
+    <meta name="keywords" content="website, content, services, quality">
+    <meta name="author" content="Your Name">
+    <meta name="robots" content="index, follow">
+    <meta property="og:title" content="Welcome to My Page">
+    <meta property="og:description" content="Welcome to our website. Discover quality content and services tailored for you.">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Welcome to My Page">
+    <meta name="twitter:description" content="Welcome to our website. Discover quality content and services tailored for you.">
+    <title>Welcome to My Page | Premium Services & Content</title>
+    <link rel="canonical" href="https://yourwebsite.com/">
+    <script>
+    !function(e){"use strict";var t=e&&e.namespace;if(t&&e.profileId&&e.cdn){var i=window[t];if(i&&Array.isArray(i)||(i=window[t]=[]),!i.initialized&&!i._loaded)if(i._loaded)console&&console.warn("[Radar] Duplicate initialization attempted");else{i._loaded=!0;["track","page","identify","group","alias","ready","debug","on","off","once","trackClick","trackSubmit","trackLink","trackForm","pageview","screen","reset","register","setAnonymousId","addSourceMiddleware","addIntegrationMiddleware","addDestinationMiddleware","giveCookieConsent"].forEach((function(e){var a;i[e]=(a=e,function(){var e=window[t];if(e.initialized)return e[a].apply(e,arguments);var i=[].slice.call(arguments);return i.unshift(a),e.push(i),e})})),-1===e.apiEndpoint.indexOf("http")&&(e.apiEndpoint="https://"+e.apiEndpoint),i.bootstrap=function(){var t,i=document.createElement("script");i.async=!0,i.type="text/javascript",i.id="__radar__",i.setAttribute("data-settings",JSON.stringify(e)),i.src=[-1!==(t=e.cdn).indexOf("http")?"":"https://",t,"/releases/latest/radar.min.js"].join("");var a=document.scripts[0];a.parentNode.insertBefore(i,a)},i.bootstrap()}}else"undefined"!=typeof console&&console.error("[Radar] Configuration incomplete")}({
+    "apiEndpoint": "radar.snitcher.com",
+    "cdn": "cdn.snitcher.com",
+    "namespace": "Snitcher",
+    "profileId": "sfwS6T7E0r"
+    });
+    </script>
+<!-- Leadinfo tracking code -->
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+        }
+        .button-container {
+            margin-top: 30px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 14px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:active {
+            background-color: #004085;
+        }
+        #status {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: white;
+            border-radius: 4px;
+            border-left: 4px solid #007bff;
+        }
+        .section {
+            margin-top: 40px;
+            padding: 20px;
+            background-color: white;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .section h2 {
+            margin-top: 0;
+            color: #333;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+        input[type="text"], input[type="email"], textarea {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+        textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+        .event-log {
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+        .log-entry {
+            padding: 5px;
+            border-bottom: 1px solid #eee;
+            font-size: 12px;
+            color: #666;
+        }
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+    </style>
+  
+</head>
+<body>
+    <h1>Welcome to My Page</h1>
+    <p>This is a basic HTML page with Snitcher tracking integration.</p>
+    
+    <div id="status"></div>
+
+    <!-- Basic Tracking Section -->
+    <div class="section">
+        <h2>Basic Event Tracking</h2>
+        <div class="button-container">
+            <button onclick="trackPageView()">Track Page View</button>
+            <button onclick="trackCustomEvent()">Track Custom Event</button>
+            <button onclick="trackButtonClick()">Track Button Click</button>
+        </div>
+    </div>
+
+    <!-- User Identification Section -->
+    <div class="section">
+        <h2>User Identification</h2>
+        <input type="text" id="userId" placeholder="User ID (e.g., user_123)" value="user_123">
+        <input type="text" id="userName" placeholder="User Name" value="Test User">
+        <input type="email" id="userEmail" placeholder="User Email" value="test@example.com">
+        <input type="text" id="userPlan" placeholder="User Plan" value="premium">
+        <div class="button-container">
+            <button onclick="identifyUserCustom()">Identify User</button>
+            <button onclick="resetUser()">Reset User</button>
+        </div>
+    </div>
+
+    <!-- Custom Event Tracking Section -->
+    <div class="section">
+        <h2>Custom Event Tracking</h2>
+        <input type="text" id="eventName" placeholder="Event Name" value="user_signup">
+        <textarea id="eventData" placeholder="Event Data (JSON format)">{"signup_method": "email", "source": "homepage"}</textarea>
+        <div class="button-container">
+            <button onclick="trackCustomEventWithData()">Track Custom Event</button>
+            <button onclick="trackPurchase()">Track Purchase Event</button>
+            <button onclick="trackPageInteraction()">Track Page Interaction</button>
+        </div>
+    </div>
+
+    <!-- User Actions Tracking Section -->
+    <div class="section">
+        <h2>User Actions</h2>
+        <div class="button-container">
+            <button onclick="trackFormSubmit()">Track Form Submit</button>
+            <button onclick="trackLinkClick()">Track Link Click</button>
+            <button onclick="trackVideoPlay()">Track Video Play</button>
+            <button onclick="trackDownload()">Track Download</button>
+            <button onclick="trackShare()">Track Share</button>
+        </div>
+    </div>
+
+    <!-- Event Log Section -->
+    <div class="section">
+        <h2>Event Log</h2>
+        <div class="button-container">
+            <button onclick="clearEventLog()">Clear Log</button>
+        </div>
+        <div id="eventLog" class="event-log">
+            <div class="log-entry">Event log will appear here...</div>
+        </div>
+    </div>
+
+    <script>
+        // Event log storage
+        let eventLog = [];
+
+        // Add event to log
+        function addToLog(message, type = 'success') {
+            const timestamp = new Date().toLocaleTimeString();
+            const entry = `[${timestamp}] ${message}`;
+            eventLog.unshift(entry);
+            if (eventLog.length > 50) eventLog.pop();
+            renderEventLog();
+        }
+
+        // Render event log
+        function renderEventLog() {
+            const logDiv = document.getElementById('eventLog');
+            if (eventLog.length === 0) {
+                logDiv.innerHTML = '<div class="log-entry">Event log is empty</div>';
+            } else {
+                logDiv.innerHTML = eventLog.map(entry => 
+                    `<div class="log-entry"><span class="success">✓</span> ${entry}</div>`
+                ).join('');
+            }
+        }
+
+        // Clear event log
+        function clearEventLog() {
+            eventLog = [];
+            renderEventLog();
+            updateStatus('Event log cleared');
+        }
+
+        // Track page view
+        function trackPageView() {
+            if (window.Snitcher && window.Snitcher.page) {
+                window.Snitcher.page('Home', {
+                    title: 'Welcome to My Page',
+                    url: window.location.href
+                });
+                addToLog('Page view tracked');
+                updateStatus('Page view tracked');
+            } else {
+                addToLog('Snitcher not loaded yet', 'error');
+                updateStatus('Snitcher not loaded yet');
+            }
+        }
+
+        // Track custom event
+        function trackCustomEvent() {
+            if (window.Snitcher && window.Snitcher.track) {
+                window.Snitcher.track('Custom Event Fired', {
+                    event_type: 'user_action',
+                    timestamp: new Date().toISOString()
+                });
+                addToLog('Custom event tracked');
+                updateStatus('Custom event tracked');
+            } else {
+                addToLog('Snitcher not loaded yet', 'error');
+                updateStatus('Snitcher not loaded yet');
+            }
+        }
+
+        // Track custom event with user input
+        function trackCustomEventWithData() {
+            if (window.Snitcher && window.Snitcher.track) {
+                const eventName = document.getElementById('eventName').value || 'Custom Event';
+                const eventDataStr = document.getElementById('eventData').value;
+                let eventData = {};
+                try {
+                    eventData = JSON.parse(eventDataStr);
+                } catch (e) {
+                    eventData = { data: eventDataStr };
+                }
+                window.Snitcher.track(eventName, eventData);
+                addToLog(`Tracked: ${eventName}`);
+                updateStatus(`Event "${eventName}" tracked successfully`);
+            } else {
+                addToLog('Snitcher not loaded yet', 'error');
+            }
+        }
+
+        // Track purchase event
+        function trackPurchase() {
+            if (window.Snitcher && window.Snitcher.track) {
+                window.Snitcher.track('Purchase', {
+                    product_id: 'prod_12345',
+                    product_name: 'Premium Plan',
+                    price: 99.99,
+                    currency: 'USD',
+                    timestamp: new Date().toISOString()
+                });
+                addToLog('Purchase event tracked');
+                updateStatus('Purchase event tracked');
+            }
+        }
+
+        // Track page interaction
+        function trackPageInteraction() {
+            if (window.Snitcher && window.Snitcher.track) {
+                window.Snitcher.track('Page Interaction', {
+                    interaction_type: 'scroll',
+                    page_depth: Math.floor(Math.random() * 100),
+                    time_on_page: Math.floor(Math.random() * 300)
+                });
+                addToLog('Page interaction tracked');
+                updateStatus('Page interaction tracked');
+            }
+        }
+
+        // Identify user
+        function identifyUserCustom() {
+            if (window.Snitcher && window.Snitcher.identify) {
+                const userId = document.getElementById('userId').value;
+                const userName = document.getElementById('userName').value;
+                const userEmail = document.getElementById('userEmail').value;
+                const userPlan = document.getElementById('userPlan').value;
+
+                window.Snitcher.identify(userId, {
+                    name: userName,
+                    email: userEmail,
+                    plan: userPlan,
+                    identified_at: new Date().toISOString()
+                });
+                addToLog(`User identified: ${userId}`);
+                updateStatus(`User "${userName}" identified successfully`);
+            } else {
+                addToLog('Snitcher not loaded yet', 'error');
+            }
+        }
+
+        // Reset user
+        function resetUser() {
+            if (window.Snitcher && window.Snitcher.reset) {
+                window.Snitcher.reset();
+                addToLog('User session reset');
+                updateStatus('User session has been reset');
+            }
+        }
+
+        // Track form submit
+        function trackFormSubmit() {
+            if (window.Snitcher && window.Snitcher.track) {
+                window.Snitcher.track('Form Submitted', {
+                    form_name: 'contact_form',
+                    form_id: 'contact_123',
+                    timestamp: new Date().toISOString()
+                });
+                addToLog('Form submit tracked');
+                updateStatus('Form submission tracked');
+            }
+        }
+
+        // Track link click
+        function trackLinkClick() {
+            if (window.Snitcher && window.Snitcher.track) {
+                window.Snitcher.track('Link Clicked', {
+                    link_url: 'https://example.com',
+                    link_text: 'Example Link',
+                    timestamp: new Date().toISOString()
+                });
+                addToLog('Link click tracked');
+                updateStatus('Link click tracked');
+            }
+        }
+
+        // Track video play
+        function trackVideoPlay() {
+            if (window.Snitcher && window.Snitcher.track) {
+                window.Snitcher.track('Video Play', {
+                    video_id: 'video_123',
+                    video_title: 'Demo Video',
+                    duration: 300,
+                    timestamp: new Date().toISOString()
+                });
+                addToLog('Video play tracked');
+                updateStatus('Video play event tracked');
+            }
+        }
+
+        // Track download
+        function trackDownload() {
+            if (window.Snitcher && window.Snitcher.track) {
+                window.Snitcher.track('Download', {
+                    file_name: 'document.pdf',
+                    file_type: 'pdf',
+                    file_size: 2048000,
+                    timestamp: new Date().toISOString()
+                });
+                addToLog('Download tracked');
+                updateStatus('Download event tracked');
+            }
+        }
+
+        // Track share
+        function trackShare() {
+            if (window.Snitcher && window.Snitcher.track) {
+                window.Snitcher.track('Share', {
+                    share_platform: 'social_media',
+                    content_type: 'article',
+                    content_id: 'article_123',
+                    timestamp: new Date().toISOString()
+                });
+                addToLog('Share event tracked');
+                updateStatus('Share event tracked');
+            }
+        }
+
+        // Track button click
+        function trackButtonClick() {
+            if (window.Snitcher && window.Snitcher.track) {
+                window.Snitcher.track('Button Clicked', {
+                    button_name: 'Track Button Click',
+                    button_id: 'btn_click',
+                    timestamp: new Date().toISOString()
+                });
+                addToLog('Button click tracked');
+                updateStatus('Button click tracked');
+            } else {
+                addToLog('Snitcher not loaded yet', 'error');
+            }
+        }
+
+        // Update status display
+        function updateStatus(message) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = '✓ ' + message + ' at ' + new Date().toLocaleTimeString();
+        }
+
+        // Check if Snitcher is ready
+        if (window.Snitcher && window.Snitcher.ready) {
+            window.Snitcher.ready(() => {
+                updateStatus('Snitcher initialized and ready');
+                addToLog('Snitcher initialized');
+            });
+        }
+
+        // Initialize event log on page load
+        window.addEventListener('load', () => {
+            renderEventLog();
+        });
+    </script>
+</body>
+</html>
