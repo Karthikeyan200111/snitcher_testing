@@ -151,6 +151,7 @@
                     <div id="passwordError" class="error-message">Please create a strong password.</div>
                 </div>
                 <button type="submit" class="submit-primary">Start</button>
+                <button type="button" onclick="logSpotterDebug()" style="margin-top:10px; padding:8px 12px;">Debug Spotter</button>
                 <!-- Hidden Spotter fields: populated by Snitcher.getSpotterIdentification() -->
                 <input type="hidden" name="snitcher_company_name" id="snitcher_company_name">
                 <input type="hidden" name="snitcher_company_domain" id="snitcher_company_domain">
@@ -441,6 +442,27 @@
 
                 if (window.Snitcher && window.Snitcher.track) {
                     try {
+                        // log payload and hidden fields for debugging
+                        console.log('Form payload before tracking:', payload);
+                        console.log('Hidden Spotter values:', {
+                            name: document.getElementById('snitcher_company_name')?.value,
+                            domain: document.getElementById('snitcher_company_domain')?.value,
+                            industry: document.getElementById('snitcher_company_industry')?.value,
+                            size: document.getElementById('snitcher_company_size')?.value,
+                            country: document.getElementById('snitcher_company_country')?.value,
+                            source: document.getElementById('snitcher_spotter_source')?.value
+                        });
+
+                        // attach a nested company object so Spotter data is grouped
+                        payload.company = {
+                            name: document.getElementById('snitcher_company_name')?.value || '',
+                            domain: document.getElementById('snitcher_company_domain')?.value || '',
+                            industry: document.getElementById('snitcher_company_industry')?.value || '',
+                            size: document.getElementById('snitcher_company_size')?.value || '',
+                            country: document.getElementById('snitcher_company_country')?.value || '',
+                            source: document.getElementById('snitcher_spotter_source')?.value || ''
+                        };
+
                         window.Snitcher.track('Form Submitted', payload);
                         addToLog('Signup form submitted and tracked');
                         updateStatus('Signup form submitted');
@@ -531,6 +553,22 @@
 
         // initialize Spotter enrichment
         initSpotterEnrichment();
+
+        // Debug helper to log current Spotter/hidden values and re-fetch
+        function logSpotterDebug() {
+            console.log('Requesting Spotter identification (debug)');
+            fetchSpotterIdentification().then(ident => {
+                console.log('Spotter identification (debug):', ident);
+                console.log('Hidden fields now:', {
+                    name: document.getElementById('snitcher_company_name')?.value,
+                    domain: document.getElementById('snitcher_company_domain')?.value,
+                    industry: document.getElementById('snitcher_company_industry')?.value,
+                    size: document.getElementById('snitcher_company_size')?.value,
+                    country: document.getElementById('snitcher_company_country')?.value,
+                    source: document.getElementById('snitcher_spotter_source')?.value
+                });
+            });
+        }
 
         // Track video play
         function trackVideoPlay() {
