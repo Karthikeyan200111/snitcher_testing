@@ -90,6 +90,17 @@
             resize: vertical;
             min-height: 60px;
         }
+        /* Signup form styles (matching screenshot) */
+        .signup-section { max-width: 620px; margin: 20px auto; }
+        .form-card { padding: 24px; border-radius: 8px; background: #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
+        .form-row { margin-bottom: 14px; }
+        .input-label { display:block; margin-bottom:6px; color:#555; font-size:14px }
+        .text-input { width:100%; padding:12px 14px; border-radius:8px; border:1px solid #e6e6e6; font-size:15px; box-sizing:border-box }
+        .text-input.invalid { border-color:#e74c3c; }
+        .error-message { color:#e74c3c; font-size:13px; margin-top:6px; display:none }
+        .error-message.visible { display:block }
+        .submit-primary { display:block; width:100%; padding:14px 18px; border-radius:10px; background:#0f5132; color:#fff; font-weight:700; border:none; font-size:16px; cursor:pointer }
+        .muted { color:#6c757d; font-size:13px; margin-top:12px; text-align:center }
         .event-log {
             background-color: #f9f9f9;
             border: 1px solid #ddd;
@@ -118,6 +129,31 @@
     <p>This is a basic HTML page with Snitcher tracking integration.</p>
     
     <div id="status"></div>
+
+     <!-- Signup Form (visual + tracked) -->
+    <div class="section signup-section">
+        <div class="form-card">
+            <h2>Sign up</h2>
+            <form id="signupForm" novalidate>
+                <div class="form-row">
+                    <label class="input-label" for="fullname">Full name</label>
+                    <input id="fullname" name="fullname" class="text-input" placeholder="" value="" />
+                    <div id="fullnameError" class="error-message">Please enter your name.</div>
+                </div>
+                <div class="form-row">
+                    <label class="input-label" for="email">Email</label>
+                    <input id="email" name="email" type="email" class="text-input" placeholder="Email" />
+                    <div id="emailError" class="error-message">Please enter a valid email address.</div>
+                </div>
+                <div class="form-row">
+                    <label class="input-label" for="password">Password</label>
+                    <input id="password" name="password" type="password" class="text-input" placeholder="Password" />
+                    <div id="passwordError" class="error-message">Please create a strong password.</div>
+                </div>
+                <button type="submit" class="submit-primary">Start</button>
+            </form>
+        </div>
+    </div>
 
     <!-- Basic Tracking Section -->
     <div class="section">
@@ -165,6 +201,8 @@
             <button onclick="trackShare()">Track Share</button>
         </div>
     </div>
+
+   
 
     <!-- Event Log Section -->
     <div class="section">
@@ -328,6 +366,83 @@
                 updateStatus('Form submission tracked');
             }
         }
+
+        // --- Signup form validation and submit handler ---
+        function validateEmail(email) {
+            const re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@(([^<>()[\]\\.,;:\s@"]+\.)+[^<>()[\]\\.,;:\s@"]{2,})$/i;
+            return re.test(String(email).toLowerCase());
+        }
+
+        function validatePassword(pw) {
+            // simple rule: at least 8 chars, one letter and one number
+            return /(?=.{8,})(?=.*[A-Za-z])(?=.*\d)/.test(pw);
+        }
+
+        function showFieldError(id, msg) {
+            const input = document.getElementById(id);
+            const err = document.getElementById(id + 'Error');
+            if (input) input.classList.add('invalid');
+            if (err) { err.textContent = msg; err.classList.add('visible'); }
+        }
+
+        function clearFieldError(id) {
+            const input = document.getElementById(id);
+            const err = document.getElementById(id + 'Error');
+            if (input) input.classList.remove('invalid');
+            if (err) { err.classList.remove('visible'); }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('signupForm');
+            if (!form) return;
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                // clear previous errors
+                ['fullname','email','password'].forEach(clearFieldError);
+
+                const fullname = document.getElementById('fullname').value.trim();
+                const email = document.getElementById('email').value.trim();
+                const password = document.getElementById('password').value;
+
+                let valid = true;
+                if (!fullname) { showFieldError('fullname', 'Please enter your name.'); valid = false; }
+                if (!validateEmail(email)) { showFieldError('email', 'Please enter a valid email address.'); valid = false; }
+                if (!validatePassword(password)) { showFieldError('password', 'Please create a strong password.'); valid = false; }
+
+                if (!valid) {
+                    addToLog('Form validation failed', 'error');
+                    updateStatus('Please fix form errors');
+                    return;
+                }
+
+                // Build payload for tracking (do NOT send raw password in production)
+                const payload = {
+                    form_name: 'signup_form',
+                    form_id: 'signup_01',
+                    fullname: fullname,
+                    email: email,
+                    // DON'T send plain passwords to analytics systems in real apps.
+                    submitted_at: new Date().toISOString()
+                };
+
+                if (window.Snitcher && window.Snitcher.track) {
+                    try {
+                        window.Snitcher.track('Form Submitted', payload);
+                        addToLog('Signup form submitted and tracked');
+                        updateStatus('Signup form submitted');
+                    } catch (err) {
+                        addToLog('Error tracking form: ' + err.message, 'error');
+                        updateStatus('Tracking error');
+                    }
+                } else {
+                    addToLog('Snitcher not loaded; captured locally', 'error');
+                    updateStatus('Snitcher not loaded yet');
+                }
+
+                // Optionally clear form on success
+                form.reset();
+            });
+        });
 
         // Track link click
         function trackLinkClick() {
