@@ -486,10 +486,35 @@
         document.addEventListener('DOMContentLoaded', () => {
             const form = document.getElementById('signupForm');
             if (!form) return;
-            form.addEventListener('submit', function(e) {
+
+            // Helper: ensure Spotter hidden fields are populated before submit
+            function ensureSpotterPopulated(timeout = 2000) {
+                return new Promise(async (resolve) => {
+                    const isPopulated = () => {
+                        const n = document.getElementById('snitcher_company_name')?.value;
+                        const d = document.getElementById('snitcher_company_domain')?.value;
+                        return !!(n || d);
+                    };
+                    if (isPopulated()) return resolve();
+                    // ask the SDK once
+                    if (window.Snitcher && typeof window.Snitcher.getSpotterIdentification === 'function') {
+                        try { await fetchSpotterIdentification(); } catch(e) { /* ignore */ }
+                        if (isPopulated()) return resolve();
+                    }
+                    const start = Date.now();
+                    const iv = setInterval(() => {
+                        if (isPopulated() || Date.now() - start > timeout) { clearInterval(iv); resolve(); }
+                    }, 200);
+                });
+            }
+
+            form.addEventListener('submit', async function(e) {
                 e.preventDefault();
                 // clear previous errors
                 ['fullname','email','password'].forEach(clearFieldError);
+
+                // wait briefly for Spotter to populate hidden inputs if they're empty
+                await ensureSpotterPopulated(2000);
 
                 const fullname = document.getElementById('fullname').value.trim();
                 const email = document.getElementById('email').value.trim();
