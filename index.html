@@ -572,10 +572,18 @@
                                 console.log('Called Snitcher.trackSubmit(form)');
                             } catch (e) {
                                 console.warn('trackSubmit failed, falling back to track()', e);
-                                if (typeof window.Snitcher.track === 'function') window.Snitcher.track('Form Submitted', payload);
                             }
-                        } else if (typeof window.Snitcher.track === 'function') {
-                            window.Snitcher.track('Form Submitted', payload);
+                        }
+
+                        // Always send an explicit tracking call with a flat payload so the dashboard receives values.
+                        // Some dashboards only show flat/top-level keys; include the hidden fields both as flat keys and
+                        // as a `company` object to preserve structure.
+                        if (typeof window.Snitcher.track === 'function') {
+                            try {
+                                window.Snitcher.track('Form Submitted', payload);
+                            } catch (e) {
+                                console.warn('Snitcher.track failed:', e);
+                            }
                         }
 
                         addToLog('Signup form submitted and tracked');
