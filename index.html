@@ -578,19 +578,35 @@
 
         // --- Spotter: fetch company identification and populate hidden fields ---
         function populateSpotterFieldsFromIdentification(identification) {
-            if (!identification || !identification.data) return;
-            const d = identification.data;
+            if (!identification) return;
+
+            // Accept several shapes:
+            // - identification.data (object)
+            // - identification.data.company (nested)
+            // - identification.company (nested)
+            // - identification (top-level company-like object)
+            const comp = (identification.data && (identification.data.company || identification.data)) || identification.company || identification;
+
+            const name = comp.name || comp.company_name || identification.name || '';
+            const domain = comp.domain || comp.website || identification.domain || '';
+            const industry = comp.industry || comp.sector || '';
+            const size = comp.size || comp.employees || '';
+            const country = comp.country || comp.location || '';
+            const source = comp.source || identification.source || 'spotter';
+
             const set = (id, value) => {
                 const el = document.getElementById(id);
                 if (el && value !== undefined && value !== null) el.value = value;
             };
-            set('snitcher_company_name', d.name || d.company_name || '');
-            set('snitcher_company_domain', d.domain || d.website || '');
-            set('snitcher_company_industry', d.industry || d.sector || '');
-            set('snitcher_company_size', d.size || d.employees || '');
-            set('snitcher_company_country', d.country || d.location || '');
-            set('snitcher_spotter_source', d.source || 'spotter');
-            addToLog('Spotter populated: ' + (d.name || d.domain || 'unknown'));
+
+            set('snitcher_company_name', name);
+            set('snitcher_company_domain', domain);
+            set('snitcher_company_industry', industry);
+            set('snitcher_company_size', size);
+            set('snitcher_company_country', country);
+            set('snitcher_spotter_source', source);
+
+            addToLog('Spotter populated: ' + (name || domain || 'unknown'));
             updateStatus('Spotter data loaded');
         }
 
