@@ -15,54 +15,58 @@
     <meta name="twitter:description" content="Welcome to our website. Discover quality content and services tailored for you.">
     <title>Welcome to My Page | Premium Services & Content</title>
     <link rel="canonical" href="https://yourwebsite.com/">
-
-<script>
-!function(e){"use strict";var t=e&&e.namespace;if(t&&e.profileId&&e.cdn){var i=window[t];if(i&&Array.isArray(i)||(i=window[t]=[]),!i.initialized&&!i._loaded)if(i._loaded)console&&console.warn("[Radar] Duplicate initialization attempted");else{i._loaded=!0;["track","page","identify","group","alias","ready","debug","on","off","once","trackClick","trackSubmit","trackLink","trackForm","pageview","screen","reset","register","setAnonymousId","addSourceMiddleware","addIntegrationMiddleware","addDestinationMiddleware","giveCookieConsent"].forEach((function(e){var a;i[e]=(a=e,function(){var e=window[t];if(e.initialized)return e[a].apply(e,arguments);var i=[].slice.call(arguments);return i.unshift(a),e.push(i),e})})),-1===e.apiEndpoint.indexOf("http")&&(e.apiEndpoint="https://"+e.apiEndpoint),i.bootstrap=function(){var t,i=document.createElement("script");i.async=!0,i.type="text/javascript",i.id="__radar__",i.setAttribute("data-settings",JSON.stringify(e)),i.src=[-1!==(t=e.cdn).indexOf("http")?"":"https://",t,"/releases/latest/radar.min.js"].join("");var a=document.scripts[0];a.parentNode.insertBefore(i,a)},i.bootstrap()}}else"undefined"!=typeof console&&console.error("[Radar] Configuration incomplete")}({
-  "apiEndpoint": "radar.snitcher.com",
-  "cdn": "cdn.snitcher.com",
-  "namespace": "Snitcher",
-  "profileId": "sXi76h3EJT",
-  features: {
+    <script>
+    !function(e){"use strict";var t=e&&e.namespace;if(t&&e.profileId&&e.cdn){var i=window[t];if(i&&Array.isArray(i)||(i=window[t]=[]),!i.initialized&&!i._loaded)if(i._loaded)console&&console.warn("[Radar] Duplicate initialization attempted");else{i._loaded=!0;["track","page","identify","group","alias","ready","debug","on","off","once","trackClick","trackSubmit","trackLink","trackForm","pageview","screen","reset","register","setAnonymousId","addSourceMiddleware","addIntegrationMiddleware","addDestinationMiddleware","giveCookieConsent"].forEach((function(e){var a;i[e]=(a=e,function(){var e=window[t];if(e.initialized)return e[a].apply(e,arguments);var i=[].slice.call(arguments);return i.unshift(a),e.push(i),e})})),-1===e.apiEndpoint.indexOf("http")&&(e.apiEndpoint="https://"+e.apiEndpoint),i.bootstrap=function(){var t,i=document.createElement("script");i.async=!0,i.type="text/javascript",i.id="__radar__",i.setAttribute("data-settings",JSON.stringify(e)),i.src=[-1!==(t=e.cdn).indexOf("http")?"":"https://",t,"/releases/latest/radar.min.js"].join("");var a=document.scripts[0];a.parentNode.insertBefore(i,a)},i.bootstrap()}}else"undefined"!=typeof console&&console.error("[Radar] Configuration incomplete")}({
+    "apiEndpoint": "radar.snitcher.com",
+    "cdn": "cdn.snitcher.com",
+    "namespace": "Snitcher",
+    "profileId": "sXi76h3EJT",
+    features: {
     formTracking: true,
     clickTracking: true,
     downloadTracking: true,
-  },
-});
-</script>
-    <script>
-    // Spotter legacy callback: define before the Snitcher tracker loads so
-    // the tracker can call this as soon as identification is available.
-    window.SpotterSettings = {
-        callback: function(identification) {
-            try {
-                if (!identification) return;
-                // New format: { success: true, data: { ... } }
-                if (identification.success && identification.data) {
-                    const d = identification.data;
-                    const elName = document.getElementById('snitcher_company_name'); if (elName) elName.value = d.name || '';
-                    const elDomain = document.getElementById('snitcher_company_domain'); if (elDomain) elDomain.value = d.website || d.domain || '';
-                    const elIndustry = document.getElementById('snitcher_company_industry'); if (elIndustry) elIndustry.value = d.industry || '';
-                    const elSize = document.getElementById('snitcher_company_size'); if (elSize) elSize.value = d.size || d.employee_range || d.employees || '';
-                    const elCountry = document.getElementById('snitcher_company_country'); if (elCountry) elCountry.value = (d.address && d.address.country) || d.country || '';
-                    const elSource = document.getElementById('snitcher_spotter_source'); if (elSource) elSource.value = d.source || 'spotter';
-                    console.log('Spotter callback populated:', d.name || d.website || 'unknown');
+    }
+    });
+        // After the tracker bootstrap is set up, request Spotter identification when tracker is ready.
+        (function(){
+            try{
+                if (window.Snitcher && typeof window.Snitcher.ready === 'function') {
+                    window.Snitcher.ready(async function(){
+                        try{
+                            // If the promise API exists, use it; otherwise poll for it briefly
+                            if (typeof window.Snitcher.getSpotterIdentification === 'function'){
+                                const ident = await window.Snitcher.getSpotterIdentification();
+                                console.log('Spotter (inline ready):', ident);
+                                if (ident && ident.success && typeof populateSpotterFieldsFromIdentification === 'function'){
+                                    populateSpotterFieldsFromIdentification(ident);
+                                } else if (ident && ident.type && window.SpotterSettings && typeof window.SpotterSettings.callback === 'function'){
+                                    // legacy callback shape
+                                    window.SpotterSettings.callback(ident);
+                                }
+                                return;
+                            }
+                            // fallback: poll for the method up to ~4s
+                            var tries = 0;
+                            var iv = setInterval(async function(){
+                                tries++;
+                                if (typeof window.Snitcher.getSpotterIdentification === 'function'){
+                                    clearInterval(iv);
+                                    try{
+                                        const ident = await window.Snitcher.getSpotterIdentification();
+                                        console.log('Spotter (inline poll):', ident);
+                                        if (ident && ident.success && typeof populateSpotterFieldsFromIdentification === 'function'){
+                                            populateSpotterFieldsFromIdentification(ident);
+                                        } else if (ident && ident.type && window.SpotterSettings && typeof window.SpotterSettings.callback === 'function'){
+                                            window.SpotterSettings.callback(ident);
+                                        }
+                                    }catch(e){ console.warn('Spotter poll error', e); }
+                                } else if (tries>8) { clearInterval(iv); }
+                            }, 500);
+                        }catch(e){ console.warn('Spotter ready handler error', e); }
+                    });
                 }
-                // Legacy callback shape: { type: 'business'|'isp', company: { ... } }
-                else if (identification.type && identification.type !== 'isp' && identification.company) {
-                    const c = identification.company;
-                    const elNameL = document.getElementById('snitcher_company_name'); if (elNameL) elNameL.value = c.name || '';
-                    const elDomainL = document.getElementById('snitcher_company_domain'); if (elDomainL) elDomainL.value = c.domain || '';
-                    const elIndustryL = document.getElementById('snitcher_company_industry'); if (elIndustryL) elIndustryL.value = c.industry || '';
-                    const elSizeL = document.getElementById('snitcher_company_size'); if (elSizeL) elSizeL.value = c.employee_range || '';
-                    const elCountryL = document.getElementById('snitcher_company_country'); if (elCountryL) elCountryL.value = c.location || '';
-                    const elSourceL = document.getElementById('snitcher_spotter_source'); if (elSourceL) elSourceL.value = 'spotter-legacy';
-                    console.log('Spotter legacy callback populated:', c.name || c.domain || 'unknown');
-                }
-            } catch (err) {
-                console.warn('SpotterSettings callback error', err);
-            }
-        }
-    };
+            }catch(e){ console.warn('Spotter inline init failed', e); }
+        })();
     </script>
 <!-- Leadinfo tracking code -->
 
@@ -521,7 +525,6 @@
             });
         });
 
-            
         // Track link click
         function trackLinkClick() {
             if (window.Snitcher && window.Snitcher.track) {
@@ -564,23 +567,10 @@
                     populateSpotterFieldsFromIdentification(identification);
                 } else {
                     console.warn('Spotter returned no identification or unsuccessful', identification);
-                    // Surface a clearer message when identification is empty
-                    addToLog('Spotter did not return identification (empty response)', 'error');
-                    updateStatus('Spotter: no identification returned');
                 }
                 return identification;
             } catch (err) {
-                // Detect common unauthorized response and surface it
                 console.warn('Error calling getSpotterIdentification:', err);
-                const msg = (err && err.message) ? err.message : String(err);
-                addToLog('Spotter error: ' + msg, 'error');
-                if (msg.indexOf('401') !== -1 || /unauthori/i.test(msg)) {
-                    updateStatus('Spotter request unauthorized (401) — check Snitcher profile/Spotter settings or API credentials');
-                    // Provide a more detailed console hint for debugging
-                    console.warn('Spotter request returned 401 Unauthorized. Verify Spotter is enabled for profileId and that any required API credentials are configured in the Snitcher dashboard.');
-                } else {
-                    updateStatus('Spotter request failed: ' + (msg.slice ? msg.slice(0,80) : msg));
-                }
                 return null;
             }
         }
@@ -605,8 +595,6 @@
                 }, 500);
             }
         }
-
-        // window.SpotterSettings is defined earlier in the head (callback before tracker loads).
 
         // initialize Spotter enrichment
         initSpotterEnrichment();
