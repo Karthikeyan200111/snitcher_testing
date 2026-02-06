@@ -15,13 +15,12 @@
     <meta name="twitter:description" content="Welcome to our website. Discover quality content and services tailored for you.">
     <title>Welcome to My Page | Premium Services & Content</title>
     <link rel="canonical" href="https://yourwebsite.com/">
-
-    <!-- Snitcher + Spotter setup -->
-    <script>
-        // Spotter callback
+        <script>
+        // Spotter callback and settings provided by user
         function myCallback(identification) {
             if (identification && identification.type !== "isp") {
-                const company = (identification.data || identification.company || identification);
+                var company = (identification.data || identification.company || identification);
+                // Store company data globally for later use
                 window.identifiedCompany = {
                     name: company.name || company.company_name || '',
                     domain: company.domain || company.website || '',
@@ -30,18 +29,19 @@
                     location: company.location || company.country || ''
                 };
 
+                // If a helper to populate hidden fields exists, call it; otherwise set fields directly
                 if (typeof populateSpotterFieldsFromIdentification === 'function') {
-                    try { populateSpotterFieldsFromIdentification(identification); } catch(e) {}
+                    try { populateSpotterFieldsFromIdentification(identification); } catch(e) { /* ignore */ }
                 } else {
                     try {
-                        const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
-                        set('snitcher_company_name', window.identifiedCompany.name);
-                        set('snitcher_company_domain', window.identifiedCompany.domain);
-                        set('snitcher_company_industry', window.identifiedCompany.industry);
-                        set('snitcher_company_size', window.identifiedCompany.employee_range);
-                        set('snitcher_company_country', window.identifiedCompany.location);
-                        set('snitcher_spotter_source', 'spotter');
-                    } catch(e) {}
+                        var setIf = function(id, val){ var el = document.getElementById(id); if(el) el.value = val || ''; };
+                        setIf('snitcher_company_name', window.identifiedCompany.name);
+                        setIf('snitcher_company_domain', window.identifiedCompany.domain);
+                        setIf('snitcher_company_industry', window.identifiedCompany.industry);
+                        setIf('snitcher_company_size', window.identifiedCompany.employee_range);
+                        setIf('snitcher_company_country', window.identifiedCompany.location);
+                        setIf('snitcher_spotter_source', 'spotter');
+                    } catch(e) { /* ignore DOM errors during early load */ }
                 }
             }
         }
@@ -50,65 +50,130 @@
             token: "1651|EwgkEyJJyhrVTXLFRnogxVwC9NQhIJFQMhq8xE3Wc313ed8f",
             callback: myCallback
         };
+
     </script>
 
     <script>
     !function(e){"use strict";var t=e&&e.namespace;if(t&&e.profileId&&e.cdn){var i=window[t];if(i&&Array.isArray(i)||(i=window[t]=[]),!i.initialized&&!i._loaded)if(i._loaded)console&&console.warn("[Radar] Duplicate initialization attempted");else{i._loaded=!0;["track","page","identify","group","alias","ready","debug","on","off","once","trackClick","trackSubmit","trackLink","trackForm","pageview","screen","reset","register","setAnonymousId","addSourceMiddleware","addIntegrationMiddleware","addDestinationMiddleware","giveCookieConsent"].forEach((function(e){var a;i[e]=(a=e,function(){var e=window[t];if(e.initialized)return e[a].apply(e,arguments);var i=[].slice.call(arguments);return i.unshift(a),e.push(i),e})})),-1===e.apiEndpoint.indexOf("http")&&(e.apiEndpoint="https://"+e.apiEndpoint),i.bootstrap=function(){var t,i=document.createElement("script");i.async=!0,i.type="text/javascript",i.id="__radar__",i.setAttribute("data-settings",JSON.stringify(e)),i.src=[-1!==(t=e.cdn).indexOf("http")?"":"https://",t,"/releases/latest/radar.min.js"].join("");var a=document.scripts[0];a.parentNode.insertBefore(i,a)},i.bootstrap()}}else"undefined"!=typeof console&&console.error("[Radar] Configuration incomplete")}({
-        "apiEndpoint": "radar.snitcher.com",
-        "cdn": "cdn.snitcher.com",
-        "namespace": "Snitcher",
-        "profileId": "sXi76h3EJT",
-        features: {
-            formTracking: true,
-            clickTracking: true,
-            downloadTracking: true,
-        }
-    });
-
-    // Request Spotter when ready
-    (function(){
-        try{
-            if (window.Snitcher && typeof window.Snitcher.ready === 'function') {
-                window.Snitcher.ready(async function(){
-                    try{
-                        if (typeof window.Snitcher.getSpotterIdentification === 'function'){
-                            const ident = await window.Snitcher.getSpotterIdentification();
-                            console.log('Spotter (ready):', ident);
-                            if (ident?.success) populateSpotterFieldsFromIdentification?.(ident);
-                            else if (ident?.type) window.SpotterSettings?.callback?.(ident);
-                            return;
-                        }
-                        // fallback polling
-                        let tries = 0;
-                        const iv = setInterval(async () => {
-                            tries++;
+    "apiEndpoint": "radar.snitcher.com",
+    "cdn": "cdn.snitcher.com",
+    "namespace": "Snitcher",
+    "profileId": "sXi76h3EJT",
+    features: {
+    formTracking: true,
+    clickTracking: true,
+    downloadTracking: true,
+    }
+});
+        // After the tracker bootstrap is set up, request Spotter identification when tracker is ready.
+        (function(){
+            try{
+                if (window.Snitcher && typeof window.Snitcher.ready === 'function') {
+                    window.Snitcher.ready(async function(){
+                        try{
+                            // If the promise API exists, use it; otherwise poll for it briefly
                             if (typeof window.Snitcher.getSpotterIdentification === 'function'){
-                                clearInterval(iv);
                                 const ident = await window.Snitcher.getSpotterIdentification();
-                                console.log('Spotter (poll):', ident);
-                                if (ident?.success) populateSpotterFieldsFromIdentification?.(ident);
-                                else if (ident?.type) window.SpotterSettings?.callback?.(ident);
-                            } else if (tries > 10) clearInterval(iv);
-                        }, 400);
-                    }catch(e){ console.warn('Spotter init error', e); }
-                });
-            }
-        }catch(e){ console.warn('Spotter inline init failed', e); }
-    })();
+                                console.log('Spotter (inline ready):', ident);
+                                if (ident && ident.success && typeof populateSpotterFieldsFromIdentification === 'function'){
+                                    populateSpotterFieldsFromIdentification(ident);
+                                } else if (ident && ident.type && window.SpotterSettings && typeof window.SpotterSettings.callback === 'function'){
+                                    // legacy callback shape
+                                    window.SpotterSettings.callback(ident);
+                                }
+                                return;
+                            }
+                            // fallback: poll for the method up to ~4s
+                            var tries = 0;
+                            var iv = setInterval(async function(){
+                                tries++;
+                                if (typeof window.Snitcher.getSpotterIdentification === 'function'){
+                                    clearInterval(iv);
+                                    try{
+                                        const ident = await window.Snitcher.getSpotterIdentification();
+                                        console.log('Spotter (inline poll):', ident);
+                                        if (ident && ident.success && typeof populateSpotterFieldsFromIdentification === 'function'){
+                                            populateSpotterFieldsFromIdentification(ident);
+                                        } else if (ident && ident.type && window.SpotterSettings && typeof window.SpotterSettings.callback === 'function'){
+                                            window.SpotterSettings.callback(ident);
+                                        }
+                                    }catch(e){ console.warn('Spotter poll error', e); }
+                                } else if (tries>8) { clearInterval(iv); }
+                            }, 500);
+                        }catch(e){ console.warn('Spotter ready handler error', e); }
+                    });
+                }
+            }catch(e){ console.warn('Spotter inline init failed', e); }
+        })();
     </script>
+<!-- Leadinfo tracking code -->
 
     <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f5f5f5; }
-        h1 { color: #333; }
-        .button-container { margin-top: 30px; display: flex; gap: 10px; flex-wrap: wrap; }
-        button { padding: 10px 20px; font-size: 14px; border: none; border-radius: 4px; cursor: pointer; background-color: #007bff; color: white; transition: background-color 0.3s; }
-        button:hover { background-color: #0056b3; }
-        button:active { background-color: #004085; }
-        #status { margin-top: 20px; padding: 10px; background-color: white; border-radius: 4px; border-left: 4px solid #007bff; }
-        .section { margin-top: 40px; padding: 20px; background-color: white; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .section h2 { margin-top: 0; color: #333; border-bottom: 2px solid #007bff; padding-bottom: 10px; }
-        input[type="text"], input[type="email"], textarea { width: 100%; padding: 8px; margin: 5px 0; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; font-family: Arial, sans-serif; }
-        textarea { resize: vertical; min-height: 60px; }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+        }
+        .button-container {
+            margin-top: 30px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 14px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:active {
+            background-color: #004085;
+        }
+        #status {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: white;
+            border-radius: 4px;
+            border-left: 4px solid #007bff;
+        }
+        .section {
+            margin-top: 40px;
+            padding: 20px;
+            background-color: white;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .section h2 {
+            margin-top: 0;
+            color: #333;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+        input[type="text"], input[type="email"], textarea {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+        textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+        /* Signup form styles (matching screenshot) */
         .signup-section { max-width: 620px; margin: 20px auto; }
         .form-card { padding: 24px; border-radius: 8px; background: #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
         .form-row { margin-bottom: 14px; }
@@ -119,12 +184,28 @@
         .error-message.visible { display:block }
         .submit-primary { display:block; width:100%; padding:14px 18px; border-radius:10px; background:#0f5132; color:#fff; font-weight:700; border:none; font-size:16px; cursor:pointer }
         .muted { color:#6c757d; font-size:13px; margin-top:12px; text-align:center }
-        .event-log { background-color: #f9f9f9; border: 1px solid #ddd; border-radius: 4px; padding: 10px; max-height: 200px; overflow-y: auto; margin-top: 10px; }
-        .log-entry { padding: 5px; border-bottom: 1px solid #eee; font-size: 12px; color: #666; }
-        .log-entry:last-child { border-bottom: none; }
+        .event-log {
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+        .log-entry {
+            padding: 5px;
+            border-bottom: 1px solid #eee;
+            font-size: 12px;
+            color: #666;
+        }
+        .log-entry:last-child {
+            border-bottom: none;
+        }
         .success { color: #28a745; }
         .error { color: #dc3545; }
     </style>
+  
 </head>
 <body>
     <h1>Welcome to My Page</h1>
@@ -132,7 +213,7 @@
     
     <div id="status"></div>
 
-    <!-- Signup Form -->
+     <!-- Signup Form (visual + tracked) -->
     <div class="section signup-section">
         <div class="form-card">
             <h2>Sign up</h2>
@@ -152,24 +233,21 @@
                     <input id="password" name="password" type="password" class="text-input" placeholder="Password" />
                     <div id="passwordError" class="error-message">Please create a strong password.</div>
                 </div>
+                
+                <!-- Hidden Spotter fields: populated by Snitcher.getSpotterIdentification() -->
+                <input type="hidden" name="snitcher_company_name" id="snitcher_company_name">
+                <input type="hidden" name="snitcher_company_domain" id="snitcher_company_domain">
+                <input type="hidden" name="snitcher_company_industry" id="snitcher_company_industry">
+                <input type="hidden" name="snitcher_company_size" id="snitcher_company_size">
+                <input type="hidden" name="snitcher_company_country" id="snitcher_company_country">
+                <input type="hidden" name="snitcher_spotter_source" id="snitcher_spotter_source">
                 <button type="submit" class="submit-primary">Start</button>
                 <button type="button" onclick="logSpotterDebug()" style="margin-top:10px; padding:8px 12px;">Debug Spotter</button>
-
-                <!-- Hidden fields for company data -->
-                <input type="hidden" name="snitcher_company_name"    id="snitcher_company_name">
-                <input type="hidden" name="snitcher_company_domain"  id="snitcher_company_domain">
-                <input type="hidden" name="snitcher_company_industry"id="snitcher_company_industry">
-                <input type="hidden" name="snitcher_company_size"    id="snitcher_company_size">
-                <input type="hidden" name="snitcher_company_country" id="snitcher_company_country">
-                <input type="hidden" name="snitcher_spotter_source"  id="snitcher_spotter_source">
             </form>
         </div>
     </div>
 
-    <!-- ────────────────────────────────────────────── -->
-    <!-- The rest of your sections (tracking buttons, etc.) -->
-    <!-- ────────────────────────────────────────────── -->
-
+    <!-- Basic Tracking Section -->
     <div class="section">
         <h2>Basic Event Tracking</h2>
         <div class="button-container">
@@ -179,6 +257,7 @@
         </div>
     </div>
 
+    <!-- User Identification Section -->
     <div class="section">
         <h2>User Identification</h2>
         <input type="text" id="userId" placeholder="User ID (e.g., user_123)" value="user_123">
@@ -191,6 +270,7 @@
         </div>
     </div>
 
+    <!-- Custom Event Tracking Section -->
     <div class="section">
         <h2>Custom Event Tracking</h2>
         <input type="text" id="eventName" placeholder="Event Name" value="user_signup">
@@ -202,6 +282,7 @@
         </div>
     </div>
 
+    <!-- User Actions Tracking Section -->
     <div class="section">
         <h2>User Actions</h2>
         <div class="button-container">
@@ -213,6 +294,9 @@
         </div>
     </div>
 
+   
+
+    <!-- Event Log Section -->
     <div class="section">
         <h2>Event Log</h2>
         <div class="button-container">
@@ -224,245 +308,512 @@
     </div>
 
     <script>
-        // ──────────────────────────────────────────────
-        // Shared helpers
-        // ──────────────────────────────────────────────
+        // Event log storage
         let eventLog = [];
 
+        // Add event to log
         function addToLog(message, type = 'success') {
-            const ts = new Date().toLocaleTimeString();
-            eventLog.unshift(`[${ts}] ${message}`);
+            const timestamp = new Date().toLocaleTimeString();
+            const entry = `[${timestamp}] ${message}`;
+            eventLog.unshift(entry);
             if (eventLog.length > 50) eventLog.pop();
             renderEventLog();
         }
 
+        // Render event log
         function renderEventLog() {
-            const div = document.getElementById('eventLog');
-            if (!div) return;
+            const logDiv = document.getElementById('eventLog');
             if (eventLog.length === 0) {
-                div.innerHTML = '<div class="log-entry">Event log is empty</div>';
+                logDiv.innerHTML = '<div class="log-entry">Event log is empty</div>';
             } else {
-                div.innerHTML = eventLog.map(e => `<div class="log-entry"><span class="success">✓</span> ${e}</div>`).join('');
+                logDiv.innerHTML = eventLog.map(entry => 
+                    `<div class="log-entry"><span class="success">✓</span> ${entry}</div>`
+                ).join('');
             }
         }
 
+        // Clear event log
         function clearEventLog() {
             eventLog = [];
             renderEventLog();
             updateStatus('Event log cleared');
         }
 
-        function updateStatus(message) {
-            const el = document.getElementById('status');
-            if (el) el.textContent = '✓ ' + message + ' — ' + new Date().toLocaleTimeString();
-        }
-
-        // ──────────────────────────────────────────────
-        // Spotter population
-        // ──────────────────────────────────────────────
-        function populateSpotterFieldsFromIdentification(identification) {
-            if (!identification) return;
-
-            const comp = (identification.data?.company || identification.data || identification.company || identification);
-
-            const name    = comp.name || comp.company_name || '';
-            const domain  = comp.domain || comp.website || '';
-            const industry= comp.industry || comp.sector || '';
-            const size    = comp.size || comp.employees || comp.employee_range || '';
-            const country = comp.country || comp.location || '';
-            const source  = comp.source || identification.source || 'spotter';
-
-            const set = (id, val) => {
-                const el = document.getElementById(id);
-                if (el && val != null) el.value = val;
-            };
-
-            set('snitcher_company_name',    name);
-            set('snitcher_company_domain',  domain);
-            set('snitcher_company_industry',industry);
-            set('snitcher_company_size',    size);
-            set('snitcher_company_country', country);
-            set('snitcher_spotter_source',  source);
-
-            addToLog(`Spotter populated: ${name || domain || 'unknown'}`);
-            updateStatus('Company data loaded');
-        }
-
-        async function fetchSpotterIdentification() {
-            if (!window.Snitcher?.getSpotterIdentification) return null;
-            try {
-                const ident = await window.Snitcher.getSpotterIdentification();
-                console.log('fetchSpotterIdentification →', ident);
-                if (ident?.success) {
-                    populateSpotterFieldsFromIdentification(ident);
-                }
-                return ident;
-            } catch (err) {
-                console.warn('getSpotterIdentification error:', err);
-                return null;
-            }
-        }
-
-        function initSpotterEnrichment() {
-            if (window.Snitcher?.ready) {
-                window.Snitcher.ready(() => fetchSpotterIdentification());
-            } else {
-                let attempts = 0;
-                const interval = setInterval(() => {
-                    attempts++;
-                    if (window.Snitcher?.getSpotterIdentification) {
-                        clearInterval(interval);
-                        fetchSpotterIdentification();
-                    }
-                    if (attempts > 12) clearInterval(interval);
-                }, 400);
-            }
-        }
-
-        // Debug button
-        function logSpotterDebug() {
-            console.log('Debug: requesting Spotter now');
-            fetchSpotterIdentification().then(ident => {
-                console.log('Spotter result (debug):', ident);
-                console.log('Current hidden fields:', {
-                    name:    document.getElementById('snitcher_company_name')?.value    || '(empty)',
-                    domain:  document.getElementById('snitcher_company_domain')?.value  || '(empty)',
-                    industry:document.getElementById('snitcher_company_industry')?.value|| '(empty)',
-                    size:    document.getElementById('snitcher_company_size')?.value    || '(empty)',
-                    country: document.getElementById('snitcher_company_country')?.value || '(empty)',
-                    source:  document.getElementById('snitcher_spotter_source')?.value  || '(empty)'
+        // Track page view
+        function trackPageView() {
+            if (window.Snitcher && window.Snitcher.page) {
+                window.Snitcher.page('Home', {
+                    title: 'Welcome to My Page',
+                    url: window.location.href
                 });
-            });
+                addToLog('Page view tracked');
+                updateStatus('Page view tracked');
+            } else {
+                addToLog('Snitcher not loaded yet', 'error');
+                updateStatus('Snitcher not loaded yet');
+            }
         }
 
-        // Initialize
-        initSpotterEnrichment();
+        // Track custom event
+        function trackCustomEvent() {
+            if (window.Snitcher && window.Snitcher.track) {
+                window.Snitcher.track('Custom Event Fired', {
+                    event_type: 'user_action',
+                    timestamp: new Date().toISOString()
+                });
+                addToLog('Custom event tracked');
+                updateStatus('Custom event tracked');
+            } else {
+                addToLog('Snitcher not loaded yet', 'error');
+                updateStatus('Snitcher not loaded yet');
+            }
+        }
 
-        // ──────────────────────────────────────────────
-        // Form submit handler with long wait for Spotter
-        // ──────────────────────────────────────────────
+        // Track custom event with user input
+        function trackCustomEventWithData() {
+            if (window.Snitcher && window.Snitcher.track) {
+                const eventName = document.getElementById('eventName').value || 'Custom Event';
+                const eventDataStr = document.getElementById('eventData').value;
+                let eventData = {};
+                try {
+                    eventData = JSON.parse(eventDataStr);
+                } catch (e) {
+                    eventData = { data: eventDataStr };
+                }
+                window.Snitcher.track(eventName, eventData);
+                addToLog(`Tracked: ${eventName}`);
+                updateStatus(`Event "${eventName}" tracked successfully`);
+            } else {
+                addToLog('Snitcher not loaded yet', 'error');
+            }
+        }
+
+        // Track purchase event
+        function trackPurchase() {
+            if (window.Snitcher && window.Snitcher.track) {
+                window.Snitcher.track('Purchase', {
+                    product_id: 'prod_12345',
+                    product_name: 'Premium Plan',
+                    price: 99.99,
+                    currency: 'USD',
+                    timestamp: new Date().toISOString()
+                });
+                addToLog('Purchase event tracked');
+                updateStatus('Purchase event tracked');
+            }
+        }
+
+        // Track page interaction
+        function trackPageInteraction() {
+            if (window.Snitcher && window.Snitcher.track) {
+                window.Snitcher.track('Page Interaction', {
+                    interaction_type: 'scroll',
+                    page_depth: Math.floor(Math.random() * 100),
+                    time_on_page: Math.floor(Math.random() * 300)
+                });
+                addToLog('Page interaction tracked');
+                updateStatus('Page interaction tracked');
+            }
+        }
+
+        // Identify user
+        function identifyUserCustom() {
+            if (window.Snitcher && window.Snitcher.identify) {
+                const userId = document.getElementById('userId').value;
+                const userName = document.getElementById('userName').value;
+                const userEmail = document.getElementById('userEmail').value;
+                const userPlan = document.getElementById('userPlan').value;
+
+                window.Snitcher.identify(userId, {
+                    name: userName,
+                    email: userEmail,
+                    plan: userPlan,
+                    identified_at: new Date().toISOString()
+                });
+                addToLog(`User identified: ${userId}`);
+                updateStatus(`User "${userName}" identified successfully`);
+            } else {
+                addToLog('Snitcher not loaded yet', 'error');
+            }
+        }
+
+        // Reset user
+        function resetUser() {
+            if (window.Snitcher && window.Snitcher.reset) {
+                window.Snitcher.reset();
+                addToLog('User session reset');
+                updateStatus('User session has been reset');
+            }
+        }
+
+        // Track form submit
+        function trackFormSubmit() {
+            if (window.Snitcher && window.Snitcher.track) {
+                window.Snitcher.track('Form Submitted', {
+                    form_name: 'contact_form',
+                    form_id: 'contact_123',
+                    timestamp: new Date().toISOString()
+                });
+                addToLog('Form submit tracked');
+                updateStatus('Form submission tracked');
+            }
+        }
+
+        // --- Signup form validation and submit handler ---
+        function validateEmail(email) {
+            const re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@(([^<>()[\]\\.,;:\s@"]+\.)+[^<>()[\]\\.,;:\s@"]{2,})$/i;
+            return re.test(String(email).toLowerCase());
+        }
+
+        function validatePassword(pw) {
+            // simple rule: at least 8 chars, one letter and one number
+            return /(?=.{8,})(?=.*[A-Za-z])(?=.*\d)/.test(pw);
+        }
+
+        function showFieldError(id, msg) {
+            const input = document.getElementById(id);
+            const err = document.getElementById(id + 'Error');
+            if (input) input.classList.add('invalid');
+            if (err) { err.textContent = msg; err.classList.add('visible'); }
+        }
+
+        function clearFieldError(id) {
+            const input = document.getElementById(id);
+            const err = document.getElementById(id + 'Error');
+            if (input) input.classList.remove('invalid');
+            if (err) { err.classList.remove('visible'); }
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             const form = document.getElementById('signupForm');
             if (!form) return;
 
-            function validateEmail(email) {
-                return /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@(([^<>()[\]\\.,;:\s@"]+\.)+[^<>()[\]\\.,;:\s@"]{2,})$/i.test(email);
-            }
-
-            function validatePassword(pw) {
-                return /(?=.{8,})(?=.*[A-Za-z])(?=.*\d)/.test(pw);
-            }
-
-            function showFieldError(id, msg) {
-                const input = document.getElementById(id);
-                const err = document.getElementById(id + 'Error');
-                if (input) input.classList.add('invalid');
-                if (err) { err.textContent = msg; err.classList.add('visible'); }
-            }
-
-            function clearFieldError(id) {
-                const input = document.getElementById(id);
-                const err = document.getElementById(id + 'Error');
-                if (input) input.classList.remove('invalid');
-                if (err) err.classList.remove('visible');
+            // Helper: ensure Spotter hidden fields are populated before submit
+            function ensureSpotterPopulated(timeout = 4000) {
+                return new Promise(async (resolve) => {
+                    const isPopulated = () => {
+                        const n = document.getElementById('snitcher_company_name')?.value;
+                        const d = document.getElementById('snitcher_company_domain')?.value;
+                        return !!(n || d);
+                    };
+                    if (isPopulated()) return resolve();
+                    // ask the SDK once
+                    if (window.Snitcher && typeof window.Snitcher.getSpotterIdentification === 'function') {
+                        try { await fetchSpotterIdentification(); } catch(e) { /* ignore */ }
+                        if (isPopulated()) return resolve();
+                    }
+                    const start = Date.now();
+                    const iv = setInterval(() => {
+                        if (isPopulated() || Date.now() - start > timeout) { clearInterval(iv); resolve(); }
+                    }, 200);
+                });
             }
 
             form.addEventListener('submit', async function(e) {
                 e.preventDefault();
-
+                // clear previous errors
                 ['fullname','email','password'].forEach(clearFieldError);
 
-                updateStatus('Waiting for company enrichment (max ~7s)...');
+                // wait briefly for Spotter to populate hidden inputs if they're empty
+                await ensureSpotterPopulated(2000);
 
-                // ─── Aggressive wait for Spotter ───────────────────────
-                const MAX_WAIT_MS = 7000;
-                const start = Date.now();
-
-                while (Date.now() - start < MAX_WAIT_MS) {
-                    const name   = document.getElementById('snitcher_company_name')?.value;
-                    const domain = document.getElementById('snitcher_company_domain')?.value;
-
-                    if (name || domain) break;
-
-                    if (window.Snitcher?.getSpotterIdentification) {
-                        await fetchSpotterIdentification().catch(() => {});
-                    }
-
-                    await new Promise(r => setTimeout(r, 600));
-                }
-
-                // ─── Now read values ───────────────────────────────────
                 const fullname = document.getElementById('fullname').value.trim();
-                const email    = document.getElementById('email').value.trim();
+                const email = document.getElementById('email').value.trim();
                 const password = document.getElementById('password').value;
 
                 let valid = true;
                 if (!fullname) { showFieldError('fullname', 'Please enter your name.'); valid = false; }
                 if (!validateEmail(email)) { showFieldError('email', 'Please enter a valid email address.'); valid = false; }
-                if (!validatePassword(password)) { showFieldError('password', 'Please create a strong password (8+ chars, letter + number).'); valid = false; }
+                if (!validatePassword(password)) { showFieldError('password', 'Please create a strong password.'); valid = false; }
 
                 if (!valid) {
                     addToLog('Form validation failed', 'error');
-                    updateStatus('Please correct the errors above');
+                    updateStatus('Please fix form errors');
                     return;
                 }
 
-                // Build payload
+                // Build payload for tracking (do NOT send raw password in production)
                 const payload = {
                     form_name: 'signup_form',
                     form_id: 'signup_01',
-                    fullname,
-                    email,
-                    submitted_at: new Date().toISOString(),
-                    company: {
-                        name:    document.getElementById('snitcher_company_name')?.value    || '',
-                        domain:  document.getElementById('snitcher_company_domain')?.value  || '',
-                        industry:document.getElementById('snitcher_company_industry')?.value|| '',
-                        size:    document.getElementById('snitcher_company_size')?.value    || '',
-                        country: document.getElementById('snitcher_company_country')?.value || '',
-                        source:  document.getElementById('snitcher_spotter_source')?.value  || 'unknown'
-                    }
+                    fullname: fullname,
+                    email: email,
+                    // Spotter-enriched fields (populated into hidden inputs)
+                    company_name: document.getElementById('snitcher_company_name')?.value || '',
+                    company_domain: document.getElementById('snitcher_company_domain')?.value || '',
+                    company_industry: document.getElementById('snitcher_company_industry')?.value || '',
+                    company_size: document.getElementById('snitcher_company_size')?.value || '',
+                    company_country: document.getElementById('snitcher_company_country')?.value || '',
+                    spotter_source: document.getElementById('snitcher_spotter_source')?.value || '',
+                    // DON'T send plain passwords to analytics systems in real apps.
+                    submitted_at: new Date().toISOString()
                 };
 
-                // Debug logs – very important for you right now
-                console.log('FORM PAYLOAD (before tracking):', payload);
-                console.log('Hidden Spotter fields at submit time:', {
-                    name:    document.getElementById('snitcher_company_name')?.value    || '(empty)',
-                    domain:  document.getElementById('snitcher_company_domain')?.value  || '(empty)',
-                    industry:document.getElementById('snitcher_company_industry')?.value|| '(empty)',
-                    size:    document.getElementById('snitcher_company_size')?.value    || '(empty)',
-                    country: document.getElementById('snitcher_company_country')?.value || '(empty)',
-                    source:  document.getElementById('snitcher_spotter_source')?.value  || '(empty)'
-                });
-
-                // Track to Snitcher
-                if (window.Snitcher?.track) {
+                if (window.Snitcher) {
                     try {
-                        window.Snitcher.track('Form Submitted', payload);
-                        addToLog('Form submitted & tracked to Snitcher');
-                        updateStatus('Form tracked (company data included if available)');
+                        // log payload and hidden fields for debugging
+                        console.log('Form payload before tracking:', payload);
+                        const hiddenValues = {
+                            name: document.getElementById('snitcher_company_name')?.value,
+                            domain: document.getElementById('snitcher_company_domain')?.value,
+                            industry: document.getElementById('snitcher_company_industry')?.value,
+                            size: document.getElementById('snitcher_company_size')?.value,
+                            country: document.getElementById('snitcher_company_country')?.value,
+                            source: document.getElementById('snitcher_spotter_source')?.value
+                        };
+                        console.log('Hidden Spotter values:', hiddenValues);
+
+                        // attach a nested company object so Spotter data is grouped
+                        payload.company = Object.assign({}, hiddenValues);
+
+                        // Prefer SDK's trackSubmit which accepts a form element and will include form fields
+                        if (typeof window.Snitcher.trackSubmit === 'function') {
+                            try {
+                                window.Snitcher.trackSubmit(form);
+                                console.log('Called Snitcher.trackSubmit(form)');
+                            } catch (e) {
+                                console.warn('trackSubmit failed, falling back to track()', e);
+                            }
+                        }
+
+                        // Always send an explicit tracking call with a flat payload so the dashboard receives values.
+                        // Some dashboards only show flat/top-level keys; include the hidden fields both as flat keys and
+                        // as a `company` object to preserve structure.
+                        if (typeof window.Snitcher.track === 'function') {
+                            try {
+                                window.Snitcher.track('Form Submitted', payload);
+                            } catch (e) {
+                                console.warn('Snitcher.track failed:', e);
+                            }
+                        }
+
+                        addToLog('Signup form submitted and tracked');
+                        updateStatus('Signup form submitted');
                     } catch (err) {
-                        console.error('Snitcher track error:', err);
-                        addToLog('Tracking error: ' + err.message, 'error');
+                        addToLog('Error tracking form: ' + err.message, 'error');
+                        updateStatus('Tracking error');
                     }
                 } else {
-                    addToLog('Snitcher not ready – form captured locally', 'error');
+                    addToLog('Snitcher not loaded; captured locally', 'error');
+                    updateStatus('Snitcher not loaded yet');
                 }
 
-                // Reset form (no backend in your case)
-                form.reset();
+                // Submit form to server if a submission URL is provided via data-submit-url on the form.
+                // This ensures hidden Spotter fields are included in the POST.
+                const submitUrl = form.dataset.submitUrl || '';
+                if (submitUrl) {
+                    // Inspect FormData for debugging
+                    const formData = new FormData(form);
+                    // build a debug object of all fields
+                    const fdDebug = {};
+                    for (const pair of formData.entries()) {
+                        fdDebug[pair[0]] = pair[1];
+                    }
+                    console.log('FormData about to be POSTed:', fdDebug);
+
+                    fetch(submitUrl, { method: 'POST', body: formData })
+                        .then(response => {
+                            if (response.ok) {
+                                addToLog('Form submitted to server');
+                                updateStatus('Form submitted to server');
+                                form.reset();
+                            } else {
+                                addToLog('Server submission failed: ' + response.status, 'error');
+                                updateStatus('Server submission failed');
+                            }
+                        })
+                        .catch(err => {
+                            addToLog('Server submission error: ' + err.message, 'error');
+                            updateStatus('Server submission error');
+                        });
+                } else {
+                    // No server URL configured — keep original behavior (reset locally)
+                    form.reset();
+                }
             });
         });
 
-        // Snitcher ready check
-        if (window.Snitcher?.ready) {
-            window.Snitcher.ready(() => {
-                updateStatus('Snitcher initialized');
-                addToLog('Snitcher ready');
+        // Track link click
+        function trackLinkClick() {
+            if (window.Snitcher && window.Snitcher.track) {
+                window.Snitcher.track('Link Clicked', {
+                    link_url: 'https://example.com',
+                    link_text: 'Example Link',
+                    timestamp: new Date().toISOString()
+                });
+                addToLog('Link click tracked');
+                updateStatus('Link click tracked');
+            }
+        }
+
+        // --- Spotter: fetch company identification and populate hidden fields ---
+        function populateSpotterFieldsFromIdentification(identification) {
+            if (!identification) return;
+
+            // Accept several shapes:
+            // - identification.data (object)
+            // - identification.data.company (nested)
+            // - identification.company (nested)
+            // - identification (top-level company-like object)
+            const comp = (identification.data && (identification.data.company || identification.data)) || identification.company || identification;
+
+            const name = comp.name || comp.company_name || identification.name || '';
+            const domain = comp.domain || comp.website || identification.domain || '';
+            const industry = comp.industry || comp.sector || '';
+            const size = comp.size || comp.employees || '';
+            const country = comp.country || comp.location || '';
+            const source = comp.source || identification.source || 'spotter';
+
+            const set = (id, value) => {
+                const el = document.getElementById(id);
+                if (el && value !== undefined && value !== null) el.value = value;
+            };
+
+            set('snitcher_company_name', name);
+            set('snitcher_company_domain', domain);
+            set('snitcher_company_industry', industry);
+            set('snitcher_company_size', size);
+            set('snitcher_company_country', country);
+            set('snitcher_spotter_source', source);
+
+            addToLog('Spotter populated: ' + (name || domain || 'unknown'));
+            updateStatus('Spotter data loaded');
+        }
+
+        async function fetchSpotterIdentification() {
+            if (!window.Snitcher || typeof window.Snitcher.getSpotterIdentification !== 'function') {
+                console.warn('Snitcher Spotter method not available yet');
+                return null;
+            }
+            try {
+                const identification = await window.Snitcher.getSpotterIdentification();
+                if (identification && identification.success) {
+                    populateSpotterFieldsFromIdentification(identification);
+                } else {
+                    console.warn('Spotter returned no identification or unsuccessful', identification);
+                }
+                return identification;
+            } catch (err) {
+                console.warn('Error calling getSpotterIdentification:', err);
+                return null;
+            }
+        }
+
+        function initSpotterEnrichment() {
+            // Respect consent frameworks: if you require consent, check it here before running.
+            if (window.Snitcher && typeof window.Snitcher.ready === 'function') {
+                window.Snitcher.ready(() => {
+                    fetchSpotterIdentification();
+                });
+            } else {
+                // Poll briefly until Snitcher is available
+                let attempts = 0;
+                const t = setInterval(() => {
+                    attempts++;
+                    if (window.Snitcher && typeof window.Snitcher.getSpotterIdentification === 'function') {
+                        clearInterval(t);
+                        fetchSpotterIdentification();
+                    } else if (attempts > 8) {
+                        clearInterval(t);
+                    }
+                }, 500);
+            }
+        }
+
+        // initialize Spotter enrichment
+        initSpotterEnrichment();
+
+        // Debug helper to log current Spotter/hidden values and re-fetch
+        function logSpotterDebug() {
+            console.log('Requesting Spotter identification (debug)');
+            fetchSpotterIdentification().then(ident => {
+                console.log('Spotter identification (debug):', ident);
+                console.log('Hidden fields now:', {
+                    name: document.getElementById('snitcher_company_name')?.value,
+                    domain: document.getElementById('snitcher_company_domain')?.value,
+                    industry: document.getElementById('snitcher_company_industry')?.value,
+                    size: document.getElementById('snitcher_company_size')?.value,
+                    country: document.getElementById('snitcher_company_country')?.value,
+                    source: document.getElementById('snitcher_spotter_source')?.value
+                });
             });
         }
 
-        window.addEventListener('load', renderEventLog);
+        // Track video play
+        function trackVideoPlay() {
+            if (window.Snitcher && window.Snitcher.track) {
+                window.Snitcher.track('Video Play', {
+                    video_id: 'video_123',
+                    video_title: 'Demo Video',
+                    duration: 300,
+                    timestamp: new Date().toISOString()
+                });
+                addToLog('Video play tracked');
+                updateStatus('Video play event tracked');
+            }
+        }
+
+        // Track download
+        function trackDownload() {
+            if (window.Snitcher && window.Snitcher.track) {
+                window.Snitcher.track('Download', {
+                    file_name: 'document.pdf',
+                    file_type: 'pdf',
+                    file_size: 2048000,
+                    timestamp: new Date().toISOString()
+                });
+                addToLog('Download tracked');
+                updateStatus('Download event tracked');
+            }
+        }
+
+        // Track share
+        function trackShare() {
+            if (window.Snitcher && window.Snitcher.track) {
+                window.Snitcher.track('Share', {
+                    share_platform: 'social_media',
+                    content_type: 'article',
+                    content_id: 'article_123',
+                    timestamp: new Date().toISOString()
+                });
+                addToLog('Share event tracked');
+                updateStatus('Share event tracked');
+            }
+        }
+
+        // Track button click
+        function trackButtonClick() {
+            if (window.Snitcher && window.Snitcher.track) {
+                window.Snitcher.track('Button Clicked', {
+                    button_name: 'Track Button Click',
+                    button_id: 'btn_click',
+                    timestamp: new Date().toISOString()
+                });
+                addToLog('Button click tracked');
+                updateStatus('Button click tracked');
+            } else {
+                addToLog('Snitcher not loaded yet', 'error');
+            }
+        }
+
+        // Update status display
+        function updateStatus(message) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = '✓ ' + message + ' at ' + new Date().toLocaleTimeString();
+        }
+
+        // Check if Snitcher is ready
+        if (window.Snitcher && window.Snitcher.ready) {
+            window.Snitcher.ready(() => {
+                updateStatus('Snitcher initialized and ready');
+                addToLog('Snitcher initialized');
+            });
+        }
+
+        // Initialize event log on page load
+        window.addEventListener('load', () => {
+            renderEventLog();
+        });
     </script>
 </body>
 </html>
