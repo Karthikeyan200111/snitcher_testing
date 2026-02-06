@@ -488,7 +488,7 @@
             if (!form) return;
 
             // Helper: ensure Spotter hidden fields are populated before submit
-            function ensureSpotterPopulated(timeout = 2000) {
+            function ensureSpotterPopulated(timeout = 4000) {
                 return new Promise(async (resolve) => {
                     const isPopulated = () => {
                         const n = document.getElementById('snitcher_company_name')?.value;
@@ -548,30 +548,36 @@
                     submitted_at: new Date().toISOString()
                 };
 
-                if (window.Snitcher && window.Snitcher.track) {
+                if (window.Snitcher) {
                     try {
                         // log payload and hidden fields for debugging
                         console.log('Form payload before tracking:', payload);
-                        console.log('Hidden Spotter values:', {
+                        const hiddenValues = {
                             name: document.getElementById('snitcher_company_name')?.value,
                             domain: document.getElementById('snitcher_company_domain')?.value,
                             industry: document.getElementById('snitcher_company_industry')?.value,
                             size: document.getElementById('snitcher_company_size')?.value,
                             country: document.getElementById('snitcher_company_country')?.value,
                             source: document.getElementById('snitcher_spotter_source')?.value
-                        });
+                        };
+                        console.log('Hidden Spotter values:', hiddenValues);
 
                         // attach a nested company object so Spotter data is grouped
-                        payload.company = {
-                            name: document.getElementById('snitcher_company_name')?.value || '',
-                            domain: document.getElementById('snitcher_company_domain')?.value || '',
-                            industry: document.getElementById('snitcher_company_industry')?.value || '',
-                            size: document.getElementById('snitcher_company_size')?.value || '',
-                            country: document.getElementById('snitcher_company_country')?.value || '',
-                            source: document.getElementById('snitcher_spotter_source')?.value || ''
-                        };
+                        payload.company = Object.assign({}, hiddenValues);
 
-                        window.Snitcher.track('Form Submitted', payload);
+                        // Prefer SDK's trackSubmit which accepts a form element and will include form fields
+                        if (typeof window.Snitcher.trackSubmit === 'function') {
+                            try {
+                                window.Snitcher.trackSubmit(form);
+                                console.log('Called Snitcher.trackSubmit(form)');
+                            } catch (e) {
+                                console.warn('trackSubmit failed, falling back to track()', e);
+                                if (typeof window.Snitcher.track === 'function') window.Snitcher.track('Form Submitted', payload);
+                            }
+                        } else if (typeof window.Snitcher.track === 'function') {
+                            window.Snitcher.track('Form Submitted', payload);
+                        }
+
                         addToLog('Signup form submitted and tracked');
                         updateStatus('Signup form submitted');
                     } catch (err) {
@@ -587,7 +593,15 @@
                 // This ensures hidden Spotter fields are included in the POST.
                 const submitUrl = form.dataset.submitUrl || '';
                 if (submitUrl) {
+                    // Inspect FormData for debugging
                     const formData = new FormData(form);
+                    // build a debug object of all fields
+                    const fdDebug = {};
+                    for (const pair of formData.entries()) {
+                        fdDebug[pair[0]] = pair[1];
+                    }
+                    console.log('FormData about to be POSTed:', fdDebug);
+
                     fetch(submitUrl, { method: 'POST', body: formData })
                         .then(response => {
                             if (response.ok) {
