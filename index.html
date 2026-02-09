@@ -4,6 +4,107 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Free Trial Signup with Snitcher Spotter Enrichment</title>
+        <script>
+!function(e){"use strict";var t=e&&e.namespace;if(t&&e.profileId&&e.cdn){var i=window[t];if(i&&Array.isArray(i)||(i=window[t]=[]),!i.initialized&&!i._loaded)if(i._loaded)console&&console.warn("[Radar] Duplicate initialization attempted");else{i._loaded=!0;["track","page","identify","group","alias","ready","debug","on","off","once","trackClick","trackSubmit","trackLink","trackForm","pageview","screen","reset","register","setAnonymousId","addSourceMiddleware","addIntegrationMiddleware","addDestinationMiddleware","giveCookieConsent"].forEach((function(e){var a;i[e]=(a=e,function(){var e=window[t];if(e.initialized)return e[a].apply(e,arguments);var i=[].slice.call(arguments);return i.unshift(a),e.push(i),e})})),-1===e.apiEndpoint.indexOf("http")&&(e.apiEndpoint="https://"+e.apiEndpoint),i.bootstrap=function(){var t,i=document.createElement("script");i.async=!0,i.type="text/javascript",i.id="__radar__",i.setAttribute("data-settings",JSON.stringify(e)),i.src=[-1!==(t=e.cdn).indexOf("http")?"":"https://",t,"/releases/latest/radar.min.js"].join("");var a=document.scripts[0];a.parentNode.insertBefore(i,a)},i.bootstrap()}}else"undefined"!=typeof console&&console.error("[Radar] Configuration incomplete")}({
+  "apiEndpoint": "radar.snitcher.com",
+  "cdn": "cdn.snitcher.com",
+  "namespace": "Snitcher",
+  "profileId": "swLB5wegec",
+   features: {
+    formTracking: true,
+    clickTracking: true,
+    downloadTracking: true,
+    }
+});
+</script>
+ 
+    <!-- Spotter callback and settings provided by user -->
+    <script>
+        // Spotter callback and settings provided by user
+        function myCallback(identification) {
+            if (identification && identification.type !== "isp") {
+                console.log('Spotter callback identification (raw):', identification);
+                var company = (identification.data || identification.company || identification);
+                // Store company data globally for later use
+                window.identifiedCompany = {
+                    name: company.name || company.company_name || '',
+                    domain: company.domain || company.website || '',
+                    industry: company.industry || company.sector || '',
+                    employee_range: company.size || company.employee_range || company.employees || '',
+                    location: company.location || company.country || ''
+                };
+
+                // If a helper to populate hidden fields exists, call it; otherwise set fields directly
+                if (typeof populateSpotterFieldsFromIdentification === 'function') {
+                    try { populateSpotterFieldsFromIdentification(identification); } catch(e) { /* ignore */ }
+                } else {
+                    try {
+                        var setIf = function(id, val){ var el = document.getElementById(id); if(el) el.value = val || ''; };
+                        setIf('snitcher_company_name', window.identifiedCompany.name);
+                        setIf('snitcher_company_domain', window.identifiedCompany.domain);
+                        setIf('snitcher_company_industry', window.identifiedCompany.industry);
+                        setIf('snitcher_company_size', window.identifiedCompany.employee_range);
+                        setIf('snitcher_company_country', window.identifiedCompany.location);
+                        setIf('snitcher_spotter_source', 'spotter');
+                        console.log('identifiedCompany (from callback):', window.identifiedCompany);
+                    } catch(e) { /* ignore DOM errors during early load */ }
+                }
+            }
+        }
+
+        window.SpotterSettings = {
+            token: "1669|P9G2LpODKlqmjemOpfxWP1VT5pAX5w7o9zDD6GdFfb62326a",
+            callback: myCallback
+        };
+
+    </script>
+
+    <!-- Snitcher Tracker Script (your actual script with your profileId) -->
+
+</script>
+ 
+    <!-- Spotter Enrichment Script using Snitcher.on('initialized') -->
+<script>
+    // Wait for Snitcher to fully initialize before querying Spotter
+    Snitcher.on('initialized', async function() {
+        try {
+            const identification = await Snitcher.getSpotterIdentification();
+            console.log('Spotter identification (initialized handler raw):', identification);
+
+            if (identification && identification.success) {
+                const data = identification.data;
+
+                // Log company details for debugging
+                console.log('Spotter company data (summarized):', {
+                    name: data.name || '',
+                    industry: data.industry || '',
+                    size: data.size || '',
+                    location: data.address ? `${data.address.city || ''}, ${data.address.country || ''}`.trim() : '',
+                    uuid: data.uuid || ''
+                });
+
+                // Populate hidden fields
+                document.getElementById('snitcher_company_name').value = data.name || '';
+                document.getElementById('snitcher_company_industry').value = data.industry || '';
+                document.getElementById('snitcher_company_size').value = data.size || '';
+                document.getElementById('snitcher_company_location').value = 
+                    data.address ? `${data.address.city || ''}, ${data.address.country || ''}`.trim() : '';
+                document.getElementById('snitcher_company_uuid').value = data.uuid || '';
+
+                // Optional: Auto-fill visible company field for better UX
+                if (data.name && !document.getElementById('visible_company').value) {
+                    document.getElementById('visible_company').value = data.name;
+                }
+
+                console.log('Snitcher Spotter enriched the form:', data.name);
+            } else {
+                console.log('No business company identified for this visitor (e.g., residential IP or no match)');
+            }
+        } catch (error) {
+            console.error('Spotter error:', error);
+        }
+    });
+</script>
 <style>
         body {
             font-family: Arial, sans-serif;
@@ -84,106 +185,7 @@
             This is a demo form. On submission, check your backend or form handler to see the hidden Snitcher fields populated with company data (if a business visitor is detected).
 </p>
 </form>
- 
-    <!-- Spotter callback and settings provided by user -->
-    <script>
-        // Spotter callback and settings provided by user
-        function myCallback(identification) {
-            if (identification && identification.type !== "isp") {
-                console.log('Spotter callback identification (raw):', identification);
-                var company = (identification.data || identification.company || identification);
-                // Store company data globally for later use
-                window.identifiedCompany = {
-                    name: company.name || company.company_name || '',
-                    domain: company.domain || company.website || '',
-                    industry: company.industry || company.sector || '',
-                    employee_range: company.size || company.employee_range || company.employees || '',
-                    location: company.location || company.country || ''
-                };
-
-                // If a helper to populate hidden fields exists, call it; otherwise set fields directly
-                if (typeof populateSpotterFieldsFromIdentification === 'function') {
-                    try { populateSpotterFieldsFromIdentification(identification); } catch(e) { /* ignore */ }
-                } else {
-                    try {
-                        var setIf = function(id, val){ var el = document.getElementById(id); if(el) el.value = val || ''; };
-                        setIf('snitcher_company_name', window.identifiedCompany.name);
-                        setIf('snitcher_company_domain', window.identifiedCompany.domain);
-                        setIf('snitcher_company_industry', window.identifiedCompany.industry);
-                        setIf('snitcher_company_size', window.identifiedCompany.employee_range);
-                        setIf('snitcher_company_country', window.identifiedCompany.location);
-                        setIf('snitcher_spotter_source', 'spotter');
-                        console.log('identifiedCompany (from callback):', window.identifiedCompany);
-                    } catch(e) { /* ignore DOM errors during early load */ }
-                }
-            }
-        }
-
-        window.SpotterSettings = {
-            token: "1668|Q9af2Rr6z37aquLIm3j5o575v0akFH8QwTBDwGQz3d823881",
-            callback: myCallback
-        };
-
-    </script>
-
-    <!-- Snitcher Tracker Script (your actual script with your profileId) -->
-<script>
-!function(e){"use strict";var t=e&&e.namespace;if(t&&e.profileId&&e.cdn){var i=window[t];if(i&&Array.isArray(i)||(i=window[t]=[]),!i.initialized&&!i._loaded)if(i._loaded)console&&console.warn("[Radar] Duplicate initialization attempted");else{i._loaded=!0;["track","page","identify","group","alias","ready","debug","on","off","once","trackClick","trackSubmit","trackLink","trackForm","pageview","screen","reset","register","setAnonymousId","addSourceMiddleware","addIntegrationMiddleware","addDestinationMiddleware","giveCookieConsent"].forEach((function(e){var a;i[e]=(a=e,function(){var e=window[t];if(e.initialized)return e[a].apply(e,arguments);var i=[].slice.call(arguments);return i.unshift(a),e.push(i),e})})),-1===e.apiEndpoint.indexOf("http")&&(e.apiEndpoint="https://"+e.apiEndpoint),i.bootstrap=function(){var t,i=document.createElement("script");i.async=!0,i.type="text/javascript",i.id="__radar__",i.setAttribute("data-settings",JSON.stringify(e)),i.src=[-1!==(t=e.cdn).indexOf("http")?"":"https://",t,"/releases/latest/radar.min.js"].join("");var a=document.scripts[0];a.parentNode.insertBefore(i,a)},i.bootstrap()}}else"undefined"!=typeof console&&console.error("[Radar] Configuration incomplete")}({
-  "apiEndpoint": "radar.snitcher.com",
-  "cdn": "cdn.snitcher.com",
-  "namespace": "Snitcher",
-  "profileId": "swLB5wegec",
-   features: {
-    formTracking: true,
-    clickTracking: true,
-    downloadTracking: true,
-    }
-});
-</script>
-</script>
- 
-    <!-- Spotter Enrichment Script using Snitcher.on('initialized') -->
-<script>
-    // Wait for Snitcher to fully initialize before querying Spotter
-    Snitcher.on('initialized', async function() {
-        try {
-            const identification = await Snitcher.getSpotterIdentification();
-            console.log('Spotter identification (initialized handler raw):', identification);
-
-            if (identification && identification.success) {
-                const data = identification.data;
-
-                // Log company details for debugging
-                console.log('Spotter company data (summarized):', {
-                    name: data.name || '',
-                    industry: data.industry || '',
-                    size: data.size || '',
-                    location: data.address ? `${data.address.city || ''}, ${data.address.country || ''}`.trim() : '',
-                    uuid: data.uuid || ''
-                });
-
-                // Populate hidden fields
-                document.getElementById('snitcher_company_name').value = data.name || '';
-                document.getElementById('snitcher_company_industry').value = data.industry || '';
-                document.getElementById('snitcher_company_size').value = data.size || '';
-                document.getElementById('snitcher_company_location').value = 
-                    data.address ? `${data.address.city || ''}, ${data.address.country || ''}`.trim() : '';
-                document.getElementById('snitcher_company_uuid').value = data.uuid || '';
-
-                // Optional: Auto-fill visible company field for better UX
-                if (data.name && !document.getElementById('visible_company').value) {
-                    document.getElementById('visible_company').value = data.name;
-                }
-
-                console.log('Snitcher Spotter enriched the form:', data.name);
-            } else {
-                console.log('No business company identified for this visitor (e.g., residential IP or no match)');
-            }
-        } catch (error) {
-            console.error('Spotter error:', error);
-        }
-    });
-</script>
+      
  
 </body>
 </html>
