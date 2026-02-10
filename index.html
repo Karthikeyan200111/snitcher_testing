@@ -4,15 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Free Trial Signup with Snitcher Spotter Enrichment</title>
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-S3ENLW0XVR"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-S3ENLW0XVR');
-</script>
 <script>
         // Spotter callback and settings provided by user
         function myCallback(identification) {
@@ -26,7 +17,7 @@
                     employee_range: company.size || company.employee_range || company.employees || '',
                     location: company.location || company.country || ''
                 };
-
+                console.log('Spotter callback triggered:', identification);
                 // If a helper to populate hidden fields exists, call it; otherwise set fields directly
                 if (typeof populateSpotterFieldsFromIdentification === 'function') {
                     try { populateSpotterFieldsFromIdentification(identification); } catch(e) { /* ignore */ }
