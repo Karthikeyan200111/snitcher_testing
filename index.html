@@ -5,6 +5,44 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Free Trial Signup with Snitcher Spotter Enrichment</title>
 <script>
+        // Spotter callback and settings provided by user
+        function myCallback(identification) {
+            if (identification && identification.type !== "isp") {
+                var company = (identification.data || identification.company || identification);
+                // Store company data globally for later use
+                window.identifiedCompany = {
+                    name: company.name || company.company_name || '',
+                    domain: company.domain || company.website || '',
+                    industry: company.industry || company.sector || '',
+                    employee_range: company.size || company.employee_range || company.employees || '',
+                    location: company.location || company.country || ''
+                };
+                console.log('Spotter callback triggered:', identification);
+                // If a helper to populate hidden fields exists, call it; otherwise set fields directly
+                if (typeof populateSpotterFieldsFromIdentification === 'function') {
+                    try { populateSpotterFieldsFromIdentification(identification); } catch(e) { /* ignore */ }
+                } else {
+                    try {
+                        var setIf = function(id, val){ var el = document.getElementById(id); if(el) el.value = val || ''; };
+                        setIf('snitcher_company_name', window.identifiedCompany.name);
+                        setIf('snitcher_company_domain', window.identifiedCompany.domain);
+                        setIf('snitcher_company_industry', window.identifiedCompany.industry);
+                        setIf('snitcher_company_size', window.identifiedCompany.employee_range);
+                        setIf('snitcher_company_country', window.identifiedCompany.location);
+                        setIf('snitcher_spotter_source', 'spotter');
+                    } catch(e) { /* ignore DOM errors during early load */ }
+                }
+            }
+        }
+
+        window.SpotterSettings = {
+            token: "1687|eUJLohy6AQxwZmj2plk8qlVo3c0OcWeqH7myiCQg9914a911",
+            callback: myCallback
+        };
+
+    </script>
+
+    <script>
 !function(e){"use strict";var t=e&&e.namespace;if(t&&e.profileId&&e.cdn){var i=window[t];if(i&&Array.isArray(i)||(i=window[t]=[]),!i.initialized&&!i._loaded)if(i._loaded)console&&console.warn("[Radar] Duplicate initialization attempted");else{i._loaded=!0;["track","page","identify","group","alias","ready","debug","on","off","once","trackClick","trackSubmit","trackLink","trackForm","pageview","screen","reset","register","setAnonymousId","addSourceMiddleware","addIntegrationMiddleware","addDestinationMiddleware","giveCookieConsent"].forEach((function(e){var a;i[e]=(a=e,function(){var e=window[t];if(e.initialized)return e[a].apply(e,arguments);var i=[].slice.call(arguments);return i.unshift(a),e.push(i),e})})),-1===e.apiEndpoint.indexOf("http")&&(e.apiEndpoint="https://"+e.apiEndpoint),i.bootstrap=function(){var t,i=document.createElement("script");i.async=!0,i.type="text/javascript",i.id="__radar__",i.setAttribute("data-settings",JSON.stringify(e)),i.src=[-1!==(t=e.cdn).indexOf("http")?"":"https://",t,"/releases/latest/radar.min.js"].join("");var a=document.scripts[0];a.parentNode.insertBefore(i,a)},i.bootstrap()}}else"undefined"!=typeof console&&console.error("[Radar] Configuration incomplete")}({
   "apiEndpoint": "radar.snitcher.com",
   "cdn": "cdn.snitcher.com",
@@ -16,50 +54,41 @@
     downloadTracking: true,
     }
 });
-
-  // Spotter settings (use promise-based API via Snitcher.getSpotterIdentification())
-        window.SpotterSettings = {
-            token: "1742|WRS05q6KN6ZQ6iG7Gtt6O14oDuuoyXe4ib6jWBSs030fd4b8"
-        };
         // After the tracker bootstrap is set up, request Spotter identification when tracker is ready.
         (function(){
             try{
                 if (window.Snitcher && typeof window.Snitcher.ready === 'function') {
                     window.Snitcher.ready(async function(){
                         try{
-                            if (typeof window.Snitcher.getSpotterIdentification !== 'function'){
-                                console.warn('Snitcher.getSpotterIdentification not available');
+                            // If the promise API exists, use it; otherwise poll for it briefly
+                            if (typeof window.Snitcher.getSpotterIdentification === 'function'){
+                                const ident = await window.Snitcher.getSpotterIdentification();
+                                console.log('Spotter (inline ready):', ident);
+                                if (ident && ident.success && typeof populateSpotterFieldsFromIdentification === 'function'){
+                                    populateSpotterFieldsFromIdentification(ident);
+                                } else if (ident && ident.type && window.SpotterSettings && typeof window.SpotterSettings.callback === 'function'){
+                                    // legacy callback shape
+                                    window.SpotterSettings.callback(ident);
+                                }
                                 return;
                             }
-                            // Use promise-based Spotter API
-                            const identification = await window.Snitcher.getSpotterIdentification();
-                            console.log('Spotter identification:', identification);
-                            if (identification && identification.success){
-                                var company = identification.data || {};
-                                window.identifiedCompany = {
-                                    name: company.name || company.company_name || '',
-                                    domain: company.domain || company.website || '',
-                                    industry: company.industry || company.sector || '',
-                                    employee_range: company.size || company.employee_range || company.employees || '',
-                                    location: company.location || company.country || ''
-                                };
-
-                                if (typeof populateSpotterFieldsFromIdentification === 'function'){
-                                    try { populateSpotterFieldsFromIdentification(identification); } catch(e) { /* ignore */ }
-                                } else {
-                                    try {
-                                        var setIf = function(id, val){ var el = document.getElementById(id); if(el) el.value = val || ''; };
-                                        setIf('snitcher_company_name', window.identifiedCompany.name);
-                                        setIf('snitcher_company_domain', window.identifiedCompany.domain);
-                                        setIf('snitcher_company_industry', window.identifiedCompany.industry);
-                                        setIf('snitcher_company_size', window.identifiedCompany.employee_range);
-                                        setIf('snitcher_company_country', window.identifiedCompany.location);
-                                        setIf('snitcher_spotter_source', 'spotter');
-                                    } catch(e) { /* ignore DOM errors during early load */ }
-                                }
-                            } else {
-                                console.log('No Spotter identification or success=false', identification);
-                            }
+                            // fallback: poll for the method up to ~4s
+                            var tries = 0;
+                            var iv = setInterval(async function(){
+                                tries++;
+                                if (typeof window.Snitcher.getSpotterIdentification === 'function'){
+                                    clearInterval(iv);
+                                    try{
+                                        const ident = await window.Snitcher.getSpotterIdentification();
+                                        console.log('Spotter (inline poll):', ident);
+                                        if (ident && ident.success && typeof populateSpotterFieldsFromIdentification === 'function'){
+                                            populateSpotterFieldsFromIdentification(ident);
+                                        } else if (ident && ident.type && window.SpotterSettings && typeof window.SpotterSettings.callback === 'function'){
+                                            window.SpotterSettings.callback(ident);
+                                        }
+                                    }catch(e){ console.warn('Spotter poll error', e); }
+                                } else if (tries>8) { clearInterval(iv); }
+                            }, 500);
                         }catch(e){ console.warn('Spotter ready handler error', e); }
                     });
                 }
