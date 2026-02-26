@@ -19,32 +19,29 @@
         });
         // Auto-detect disabled — identification will only run when you click "Detect Company".
     </script>
-    <!-- <script>
-        // Spotter callback and settings provided by user
-        function myCallback(identification) {
-            if (identification && identification.type !== "isp") {
-                var company = (identification.data || identification.company || identification);
-                // Store company data globally for later use
-                window.identifiedCompany = {
-                    name: company.name || company.company_name || '',
-                    domain: company.domain || company.website || '',
-                    industry: company.industry || company.sector || '',
-                    employee_range: company.size || company.employee_range || company.employees || '',
-                    location: company.location || company.country || ''
-                };
-                console.log('Spotter callback triggered:', identification);
-                if (typeof populateSpotterFieldsFromIdentification === 'function') {
-                    try { populateSpotterFieldsFromIdentification(identification); } catch (e) { /* ignore */ }
-                }
+    <script>
+        function handleSpotterIdentification(identification) {
+            if (!identification || identification.type === "isp") return;
+            
+            var company = identification.data || identification.company || identification;
+            window.identifiedCompany = {
+                name: company.name || company.company_name || '',
+                domain: company.domain || company.website || '',
+                industry: company.industry || company.sector || '',
+                employee_range: company.size || company.employee_range || company.employees || '',
+                location: company.location || company.country || ''
+            };
+            
+            if (typeof populateSpotterFieldsFromIdentification === 'function') {
+                populateSpotterFieldsFromIdentification(identification);
             }
         }
 
         window.SpotterSettings = {
             token: "1687|eUJLohy6AQxwZmj2plk8qlVo3c0OcWeqH7myiCQg9914a911",
-            callback: myCallback
+            callback: handleSpotterIdentification
         };
-
-    </script> -->
+    </script>
 
     
 
@@ -104,6 +101,7 @@
             font-size: 0.9em;
             color: #666;
             margin-top: 20px;
+            line-height: 1.5;
         }
     </style>
 </head>
@@ -144,20 +142,24 @@
         document.addEventListener('DOMContentLoaded', function () {
             var btn = document.getElementById('detect_company_btn');
             var display = document.getElementById('detected_company');
+            
             if (!btn) return;
+            
             btn.addEventListener('click', async function () {
-                try {
-                    if (window.Snitcher && typeof window.Snitcher.getSpotterIdentification === 'function') {
+                if (window.Snitcher && typeof window.Snitcher.getSpotterIdentification === 'function') {
+                    try {
                         const ident = await window.Snitcher.getSpotterIdentification();
-                        var company = (ident && (ident.data || ident.company || ident)) || {};
-                        var name = company.name || company.company_name || '';
-                        // Print only the company name to the console as requested
-                        console.log(name);
-                        if (display) display.textContent = name ? name : 'No company detected';
-                    } else {
-                        console.log('Snitcher API not available');
+                        if (window.SpotterSettings && typeof window.SpotterSettings.callback === 'function') {
+                            window.SpotterSettings.callback(ident);
+                        }
+                        var name = (window.identifiedCompany && window.identifiedCompany.name) || 'No company detected';
+                        if (display) display.textContent = name;
+                    } catch (e) { 
+                        console.error('Spotter detection failed:', e); 
                     }
-                } catch (e) { console.warn('Spotter detect error', e); }
+                } else {
+                    console.warn('Snitcher API not available');
+                }
             });
         });
     </script>
