@@ -26,7 +26,7 @@
                 location: company.location || company.country || ''
             };
         }
-
+        console.log(window.identifiedCompany.name || 'Unknown');
         window.SpotterSettings = {
             token: "1758|vqI0zIwRIyiDDKq7Qs3e7lOHtPlkYsZ0TGcwEMJH1fd5b529",
             callback: handleSpotterIdentification
