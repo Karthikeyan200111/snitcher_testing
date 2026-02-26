@@ -25,8 +25,9 @@
                 employee_range: company.size || company.employee_range || company.employees || '',
                 location: company.location || company.country || ''
             };
+            console.log('Company detected:', window.identifiedCompany.name || 'Unknown');
         }
-        console.log(window.identifiedCompany.name || 'Unknown');
+
         window.SpotterSettings = {
             token: "1758|vqI0zIwRIyiDDKq7Qs3e7lOHtPlkYsZ0TGcwEMJH1fd5b529",
             callback: handleSpotterIdentification
