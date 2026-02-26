@@ -5,6 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Free Trial Signup with Snitcher Spotter Enrichment</title>
+
+    <!-- Main Snitcher Radar tracking script – keep unchanged -->
     <script>
         !function (e) { "use strict"; var t = e && e.namespace; if (t && e.profileId && e.cdn) { var i = window[t]; if (i && Array.isArray(i) || (i = window[t] = []), !i.initialized && !i._loaded) if (i._loaded) console && console.warn("[Radar] Duplicate initialization attempted"); else { i._loaded = !0;["track", "page", "identify", "group", "alias", "ready", "debug", "on", "off", "once", "trackClick", "trackSubmit", "trackLink", "trackForm", "pageview", "screen", "reset", "register", "setAnonymousId", "addSourceMiddleware", "addIntegrationMiddleware", "addDestinationMiddleware", "giveCookieConsent"].forEach((function (e) { var a; i[e] = (a = e, function () { var e = window[t]; if (e.initialized) return e[a].apply(e, arguments); var i = [].slice.call(arguments); return i.unshift(a), e.push(i), e }) })), -1 === e.apiEndpoint.indexOf("http") && (e.apiEndpoint = "https://" + e.apiEndpoint), i.bootstrap = function () { var t, i = document.createElement("script"); i.async = !0, i.type = "text/javascript", i.id = "__radar__", i.setAttribute("data-settings", JSON.stringify(e)), i.src = [-1 !== (t = e.cdn).indexOf("http") ? "" : "https://", t, "/releases/latest/radar.min.js"].join(""); var a = document.scripts[0]; a.parentNode.insertBefore(i, a) }, i.bootstrap() } } else "undefined" != typeof console && console.error("[Radar] Configuration incomplete") }({
             "apiEndpoint": "radar.snitcher.com",
@@ -13,7 +15,9 @@
             "profileId": "s8VoB1DBgL"
         });
     </script>
-    <!-- <script>
+
+    <!-- Callback function – we keep it, but now call it manually -->
+    <script>
         function handleSpotterIdentification(identification) {
             if (!identification || identification.type === "isp") return;
 
@@ -25,15 +29,11 @@
                 employee_range: company.size || company.employee_range || company.employees || '',
                 location: company.location || company.country || ''
             };
+
+            // Optional: console log for debugging
+            console.log("Company identified via manual trigger:", window.identifiedCompany);
         }
-
-        window.SpotterSettings = {
-            token: "1758|vqI0zIwRIyiDDKq7Qs3e7lOHtPlkYsZ0TGcwEMJH1fd5b529",
-            callback: handleSpotterIdentification
-        };
-    </script> -->
-
-
+    </script>
 
     <style>
         body {
@@ -44,24 +44,18 @@
             background: #f9f9f9;
             color: #333;
         }
-
-        h1 {
-            text-align: center;
-        }
-
+        h1 { text-align: center; }
         form {
             background: white;
             padding: 30px;
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
-
         label {
             display: block;
             margin-top: 15px;
             font-weight: bold;
         }
-
         input[type="text"],
         input[type="email"] {
             width: 100%;
@@ -71,7 +65,6 @@
             border-radius: 4px;
             box-sizing: border-box;
         }
-
         button {
             margin-top: 25px;
             padding: 12px 20px;
@@ -82,11 +75,7 @@
             font-size: 16px;
             cursor: pointer;
         }
-
-        button:hover {
-            background: #0056b3;
-        }
-
+        button:hover { background: #0056b3; }
         .note {
             font-size: 0.9em;
             color: #666;
@@ -128,70 +117,57 @@
         </p>
     </form>
 
-   <script>
-document.addEventListener('DOMContentLoaded', function () {
-    const detectBtn = document.getElementById('detect_company_btn');
-    const display = document.getElementById('detected_company');
-    const form = document.getElementById('free-trial-form');
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const btn = document.getElementById('detect_company_btn');
+            const display = document.getElementById('detected_company');
 
-    if (!detectBtn) return;
+            if (!btn) return;
 
-    detectBtn.addEventListener('click', async function () {
-        if (!window.Snitcher) {
-            console.warn('Snitcher not loaded yet');
-            display.textContent = 'Snitcher not ready – try again in a moment';
-            return;
-        }
+            btn.addEventListener('click', async function () {
+                if (!window.Snitcher) {
+                    console.warn('Snitcher not loaded yet');
+                    if (display) display.textContent = 'Snitcher not ready – try again soon';
+                    return;
+                }
 
-        try {
-            // Wait for initialization if not already done
-            if (!Snitcher.initialized) {
-                await new Promise(resolve => Snitcher.on('initialized', resolve));
-            }
+                try {
+                    // Wait for initialization if needed (good practice)
+                    if (!Snitcher.initialized) {
+                        await new Promise(resolve => Snitcher.on('initialized', resolve));
+                    }
 
-            const identification = await Snitcher.getSpotterIdentification();
+                    const ident = await window.Snitcher.getSpotterIdentification();
 
-            if (!identification || identification.type === 'isp' || !identification.success) {
-                display.textContent = 'No company detected (ISP or no match)';
-                return;
-            }
+                    // Manually call your callback function only now
+                    if (typeof handleSpotterIdentification === 'function') {
+                        handleSpotterIdentification(ident);
+                    }
 
-            const company = identification.data || identification.company || identification;
+                    // Show result
+                    const companyName = (window.identifiedCompany && window.identifiedCompany.name) || 'No company detected';
+                    if (display) display.textContent = companyName;
 
-            window.identifiedCompany = {
-                name: company.name || company.company_name || '',
-                domain: company.domain || company.website || '',
-                industry: company.industry || company.sector || '',
-                employee_range: company.size || company.employee_range || company.employees || '',
-                location: company.location || company.country || ''
-            };
+                    // Populate hidden fields so they submit with the form
+                    if (window.identifiedCompany) {
+                        document.getElementById('snitcher_company_name').value     = window.identifiedCompany.name;
+                        document.getElementById('snitcher_company_industry').value = window.identifiedCompany.industry;
+                        document.getElementById('snitcher_company_size').value     = window.identifiedCompany.employee_range;
+                        document.getElementById('snitcher_company_location').value = window.identifiedCompany.location;
+                        // Add UUID or other fields if available in ident.data.uuid etc.
+                        // document.getElementById('snitcher_company_uuid').value = ident.data?.uuid || '';
 
-            // Show result on page
-            display.textContent = window.identifiedCompany.name || 'Company detected!';
+                        // Optional: also fill visible field
+                        document.getElementById('visible_company').value = window.identifiedCompany.name;
+                    }
 
-            // Populate hidden fields so they submit with the form
-            document.getElementById('snitcher_company_name').value     = window.identifiedCompany.name;
-            document.getElementById('snitcher_company_industry').value = window.identifiedCompany.industry;
-            document.getElementById('snitcher_company_size').value     = window.identifiedCompany.employee_range;
-            document.getElementById('snitcher_company_location').value = window.identifiedCompany.location;
-            // If you have UUID or other fields, add them here too
-
-            // Optional: auto-fill visible company field too
-            document.getElementById('visible_company').value = window.identifiedCompany.name;
-
-            console.log('Company identified:', window.identifiedCompany);
-
-        } catch (e) {
-            console.error('Spotter detection failed:', e);
-            display.textContent = 'Detection failed – check console';
-        }
-    });
-
-    // Optional: You could also auto-detect on page load / after delay, but since you want manual → commented out
-    // setTimeout(async () => { if (detectBtn) detectBtn.click(); }, 3000);
-});
-</script>
+                } catch (e) {
+                    console.error('Spotter detection failed:', e);
+                    if (display) display.textContent = 'Detection error – check console';
+                }
+            });
+        });
+    </script>
 
 </body>
-
 </html>
