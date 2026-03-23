@@ -29,14 +29,46 @@
             console.log('visitorId:', visitorId);
         }
 
+        function readSnitcherVisitorId() {
+            if (!window.Snitcher) {
+                return '';
+            }
+
+            if (typeof window.Snitcher.getVisitorId === 'function') {
+                return null;
+            }
+
+            if (typeof window.Snitcher.user === 'function') {
+                var user = window.Snitcher.user();
+                if (user && typeof user.anonymousId === 'function') {
+                    return user.anonymousId() || '';
+                }
+            }
+
+            return '';
+        }
+
         function loadSnitcherVisitorId() {
-            if (!window.Snitcher || typeof window.Snitcher.getVisitorId !== 'function') {
+            if (!window.Snitcher) {
+                console.log('visitorId: Snitcher not available yet');
                 return;
             }
 
-            window.Snitcher.getVisitorId(function (visitorId) {
-                setSnitcherVisitorId(visitorId);
-            });
+            if (typeof window.Snitcher.getVisitorId === 'function') {
+                window.Snitcher.getVisitorId(function (visitorId) {
+                    setSnitcherVisitorId(visitorId);
+                });
+                return;
+            }
+
+            var fallbackVisitorId = readSnitcherVisitorId();
+            if (fallbackVisitorId) {
+                console.log('visitorId source: anonymousId fallback');
+                setSnitcherVisitorId(fallbackVisitorId);
+                return;
+            }
+
+            console.log('visitorId: unavailable on current Snitcher object');
         }
 
         function handleSpotterIdentification(identification) {
@@ -174,6 +206,8 @@
             } else {
                 window.setTimeout(loadSnitcherVisitorId, 1500);
             }
+
+            window.setTimeout(loadSnitcherVisitorId, 3000);
 
             if (!btn) return;
 
