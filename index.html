@@ -10,10 +10,35 @@
             "apiEndpoint": "radar.snitcher.com",
             "cdn": "cdn.snitcher.com",
             "namespace": "Snitcher",
-            "profileId": "s8VoB1DBgL"
+            "profileId": "s3Ark9d6CC"
         });
     </script>
     <script>
+        window.snitcherVisitorId = '';
+
+        function setSnitcherVisitorId(visitorId) {
+            if (!visitorId) return;
+
+            window.snitcherVisitorId = visitorId;
+
+            var visitorIdField = document.getElementById('snitcher_visitor_id');
+            if (visitorIdField) {
+                visitorIdField.value = visitorId;
+            }
+
+            console.log('Snitcher Visitor ID:', visitorId);
+        }
+
+        function loadSnitcherVisitorId() {
+            if (!window.Snitcher || typeof window.Snitcher.getVisitorId !== 'function') {
+                return;
+            }
+
+            window.Snitcher.getVisitorId(function (visitorId) {
+                setSnitcherVisitorId(visitorId);
+            });
+        }
+
         function handleSpotterIdentification(identification) {
             if (!identification || identification.type === "isp") return;
 
@@ -118,6 +143,7 @@
         <input type="hidden" name="snitcher_company_size" id="snitcher_company_size">
         <input type="hidden" name="snitcher_company_location" id="snitcher_company_location">
         <input type="hidden" name="snitcher_company_uuid" id="snitcher_company_uuid">
+        <input type="hidden" name="snitcher_visitor_id" id="snitcher_visitor_id">
 
         <button type="submit">Start Free Trial</button>
         <button type="button" id="detect_company_btn">Detect Company</button>
@@ -131,15 +157,68 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            var form = document.getElementById('free-trial-form');
             var btn = document.getElementById('detect_company_btn');
             var display = document.getElementById('detected_company');
+            var visibleCompany = document.getElementById('visible_company');
+            var companyNameField = document.getElementById('snitcher_company_name');
+            var companyIndustryField = document.getElementById('snitcher_company_industry');
+            var companySizeField = document.getElementById('snitcher_company_size');
+            var companyLocationField = document.getElementById('snitcher_company_location');
+            var companyUuidField = document.getElementById('snitcher_company_uuid');
+
+            if (window.Snitcher && typeof window.Snitcher.ready === 'function') {
+                window.Snitcher.ready(function () {
+                    loadSnitcherVisitorId();
+                });
+            } else {
+                window.setTimeout(loadSnitcherVisitorId, 1500);
+            }
 
             if (!btn) return;
 
             btn.addEventListener('click', function () {
                 var name = (window.identifiedCompany && window.identifiedCompany.name) || 'No company detected';
+
+                if (window.identifiedCompany) {
+                    if (visibleCompany && !visibleCompany.value && window.identifiedCompany.name) {
+                        visibleCompany.value = window.identifiedCompany.name;
+                    }
+
+                    if (companyNameField) companyNameField.value = window.identifiedCompany.name || '';
+                    if (companyIndustryField) companyIndustryField.value = window.identifiedCompany.industry || '';
+                    if (companySizeField) companySizeField.value = window.identifiedCompany.employee_range || '';
+                    if (companyLocationField) companyLocationField.value = window.identifiedCompany.location || '';
+                    if (companyUuidField) companyUuidField.value = window.snitcherVisitorId || '';
+                }
+
                 if (display) display.textContent = name;
             });
+
+            if (form) {
+                form.addEventListener('submit', function () {
+                    if (window.identifiedCompany) {
+                        if (companyNameField) companyNameField.value = window.identifiedCompany.name || '';
+                        if (companyIndustryField) companyIndustryField.value = window.identifiedCompany.industry || '';
+                        if (companySizeField) companySizeField.value = window.identifiedCompany.employee_range || '';
+                        if (companyLocationField) companyLocationField.value = window.identifiedCompany.location || '';
+                    }
+
+                    var visitorIdField = document.getElementById('snitcher_visitor_id');
+                    if (visitorIdField) {
+                        visitorIdField.value = window.snitcherVisitorId || '';
+                    }
+
+                    if (window.Snitcher && typeof window.Snitcher.track === 'function') {
+                        window.Snitcher.track('Free Trial Form Submitted', {
+                            visitorId: window.snitcherVisitorId || '',
+                            formName: 'Free Trial',
+                            email: document.getElementById('email') ? document.getElementById('email').value : '',
+                            company: visibleCompany ? visibleCompany.value : ''
+                        });
+                    }
+                });
+            }
         });
     </script>
 
