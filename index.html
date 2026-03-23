@@ -14,61 +14,8 @@
         });
     </script>
     <script>
-        window.snitcherVisitorId = '';
-
-        function setSnitcherVisitorId(visitorId) {
-            if (!visitorId) return;
-
-            window.snitcherVisitorId = visitorId;
-
-            var visitorIdField = document.getElementById('snitcher_visitor_id');
-            if (visitorIdField) {
-                visitorIdField.value = visitorId;
-            }
-
-            console.log('visitorId:', visitorId);
-        }
-
-        function readSnitcherVisitorId() {
-            if (!window.Snitcher) {
-                return '';
-            }
-
-            if (typeof window.Snitcher.getVisitorId === 'function') {
-                return null;
-            }
-
-            if (typeof window.Snitcher.user === 'function') {
-                var user = window.Snitcher.user();
-                if (user && typeof user.anonymousId === 'function') {
-                    return user.anonymousId() || '';
-                }
-            }
-
-            return '';
-        }
-
-        function loadSnitcherVisitorId() {
-            if (!window.Snitcher) {
-                console.log('visitorId: Snitcher not available yet');
-                return;
-            }
-
-            if (typeof window.Snitcher.getVisitorId === 'function') {
-                window.Snitcher.getVisitorId(function (visitorId) {
-                    setSnitcherVisitorId(visitorId);
-                });
-                return;
-            }
-
-            var fallbackVisitorId = readSnitcherVisitorId();
-            if (fallbackVisitorId) {
-                console.log('visitorId source: anonymousId fallback');
-                setSnitcherVisitorId(fallbackVisitorId);
-                return;
-            }
-
-            console.log('visitorId: unavailable on current Snitcher object');
+        function generateUserId() {
+            return 'user_' + Date.now() + '_' + Math.random().toString(36).slice(2, 10);
         }
 
         function handleSpotterIdentification(identification) {
@@ -175,7 +122,7 @@
         <input type="hidden" name="snitcher_company_size" id="snitcher_company_size">
         <input type="hidden" name="snitcher_company_location" id="snitcher_company_location">
         <input type="hidden" name="snitcher_company_uuid" id="snitcher_company_uuid">
-        <input type="hidden" name="snitcher_visitor_id" id="snitcher_visitor_id">
+        <input type="hidden" name="user_id" id="user_id">
 
         <button type="submit">Start Free Trial</button>
         <button type="button" id="detect_company_btn">Detect Company</button>
@@ -198,16 +145,7 @@
             var companySizeField = document.getElementById('snitcher_company_size');
             var companyLocationField = document.getElementById('snitcher_company_location');
             var companyUuidField = document.getElementById('snitcher_company_uuid');
-
-            if (window.Snitcher && typeof window.Snitcher.ready === 'function') {
-                window.Snitcher.ready(function () {
-                    loadSnitcherVisitorId();
-                });
-            } else {
-                window.setTimeout(loadSnitcherVisitorId, 1500);
-            }
-
-            window.setTimeout(loadSnitcherVisitorId, 3000);
+            var userIdField = document.getElementById('user_id');
 
             if (!btn) return;
 
@@ -223,7 +161,6 @@
                     if (companyIndustryField) companyIndustryField.value = window.identifiedCompany.industry || '';
                     if (companySizeField) companySizeField.value = window.identifiedCompany.employee_range || '';
                     if (companyLocationField) companyLocationField.value = window.identifiedCompany.location || '';
-                    if (companyUuidField) companyUuidField.value = window.snitcherVisitorId || '';
                 }
 
                 if (display) display.textContent = name;
@@ -240,19 +177,37 @@
                         if (companyLocationField) companyLocationField.value = window.identifiedCompany.location || '';
                     }
 
-                    var visitorIdField = document.getElementById('snitcher_visitor_id');
-                    if (visitorIdField) {
-                        visitorIdField.value = window.snitcherVisitorId || '';
+                    var emailField = document.getElementById('email');
+                    var nameField = document.getElementById('name');
+                    var email = emailField ? emailField.value : '';
+                    var fullName = nameField ? nameField.value : '';
+                    var companyName = visibleCompany ? visibleCompany.value : '';
+                    var userId = userIdField && userIdField.value ? userIdField.value : generateUserId();
+
+                    if (userIdField) {
+                        userIdField.value = userId;
                     }
 
-                    console.log('visitorId:', window.snitcherVisitorId || '');
+                    console.log('userId:', userId);
+
+                    if (companyUuidField) {
+                        companyUuidField.value = userId;
+                    }
+
+                    if (window.Snitcher && typeof window.Snitcher.identify === 'function' && email) {
+                        window.Snitcher.identify(email, {
+                            userId: userId,
+                            name: fullName,
+                            company: companyName
+                        });
+                    }
 
                     if (window.Snitcher && typeof window.Snitcher.track === 'function') {
                         window.Snitcher.track('Free Trial Form Submitted', {
-                            visitorId: window.snitcherVisitorId || '',
+                            userId: userId,
                             formName: 'Free Trial',
-                            email: document.getElementById('email') ? document.getElementById('email').value : '',
-                            company: visibleCompany ? visibleCompany.value : ''
+                            email: email,
+                            company: companyName
                         });
                     }
 
