@@ -143,7 +143,7 @@
         <input type="hidden" name="snitcher_company_size" id="snitcher_company_size">
         <input type="hidden" name="snitcher_company_location" id="snitcher_company_location">
         <input type="hidden" name="snitcher_company_uuid" id="snitcher_company_uuid">
-        <input type="text" name="snitcher_visitor_id" id="snitcher_visitor_id">
+        <input type="hidden" name="snitcher_visitor_id" id="snitcher_visitor_id">
 
         <button type="submit">Start Free Trial</button>
         <button type="button" id="detect_company_btn">Detect Company</button>
@@ -196,7 +196,9 @@
             });
 
             if (form) {
-                form.addEventListener('submit', function () {
+                form.addEventListener('submit', function (event) {
+                    event.preventDefault();
+
                     if (window.identifiedCompany) {
                         if (companyNameField) companyNameField.value = window.identifiedCompany.name || '';
                         if (companyIndustryField) companyIndustryField.value = window.identifiedCompany.industry || '';
@@ -219,6 +221,8 @@
                             company: visibleCompany ? visibleCompany.value : ''
                         });
                     }
+
+                    console.log('Form submit intercepted for demo; no POST sent.');
                 });
             }
         });
