@@ -194,13 +194,13 @@
                         companyUuidField.value = userId;
                     }
 
-                    if (window.Snitcher && typeof window.Snitcher.identify === 'function' && email) {
-                        window.Snitcher.identify(email, {
-                            userId: userId,
-                            name: fullName,
-                            company: companyName
-                        });
-                    }
+                    // if (window.Snitcher && typeof window.Snitcher.identify === 'function' && email) {
+                    //     window.Snitcher.identify(email, {
+                    //         userId: userId,
+                    //         name: fullName,
+                    //         company: companyName
+                    //     });
+                    // }
 
                     if (window.Snitcher && typeof window.Snitcher.track === 'function') {
                         window.Snitcher.track('Free Trial Form Submitted', {
