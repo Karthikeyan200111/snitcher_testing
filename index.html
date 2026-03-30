@@ -111,19 +111,30 @@
          function generateUserId() {
             return 'user_' + Date.now() + '_' + Math.random().toString(36).slice(2, 10);
             }
-        
+
         window.addEventListener("load",function () {
-            var userIdData = generateUserId()
-            if (window.Snitcher && typeof window.Snitcher.track === 'function') {
-                window.Snitcher.track('Free Trial Form Submitted', {
-                    userId: userIdData,
-                });
-                console.log("Send user details successfully ",userIdData)
-            }else{
-                console.log("Failed to send....")
-            }
-        }
+        var userIdData = generateUserId()
+    
+            window.Snitcher.track('Free Trial Form Submitted', {
+                userId: userIdData,
+            });
+            console.log("Send user details successfully ",userIdData)
+           
+          }
         )
+        
+        // window.addEventListener("load",function () {
+        //     var userIdData = generateUserId()
+        //     if (window.Snitcher && typeof window.Snitcher.track === 'function') {
+        //         window.Snitcher.track('Free Trial Form Submitted', {
+        //             userId: userIdData,
+        //         });
+        //         console.log("Send user details successfully ",userIdData)
+        //     }else{
+        //         console.log("Failed to send....")
+        //     }
+        // }
+        // )
         // window.onload = function (){
         //     var userIdData = generateUserId()
         //     if (window.Snitcher && typeof window.Snitcher.track === 'function') {
