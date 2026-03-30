@@ -108,6 +108,10 @@
     </form>
 
     <script>
+         function generateUserId() {
+            return 'user_' + Date.now() + '_' + Math.random().toString(36).slice(2, 10);
+            }
+           
         window.onload = function (){
             if (window.Snitcher && typeof window.Snitcher.track === 'function') {
                 window.Snitcher.track('Free Trial Form Submitted', {
@@ -126,9 +130,6 @@
 
             if (!btn) return;
             
-            function generateUserId() {
-            return 'user_' + Date.now() + '_' + Math.random().toString(36).slice(2, 10);
-            }
            
            
             if (form) {
