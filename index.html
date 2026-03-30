@@ -13,13 +13,6 @@
             "profileId": "s1vQ0pNqOh"
         });
     </script>
-    <script>
-        function generateUserId() {
-            return 'user_' + Date.now() + '_' + Math.random().toString(36).slice(2, 10);
-        }
-    </script>
-
-
 
     <style>
         body {
@@ -108,75 +101,24 @@
     </form>
 
     <script>
-         function generateUserId() {
+        function generateUserId() {
             return 'user_' + Date.now() + '_' + Math.random().toString(36).slice(2, 10);
+        }
+
+        window.addEventListener('load', function () {
+            var userIdData = generateUserId();
+
+            if (!window.Snitcher || typeof window.Snitcher.ready !== 'function') {
+                console.log('Snitcher is not available; event not queued.');
+                return;
             }
 
-        window.addEventListener("load",function () {
-        var userIdData = generateUserId()
-    
-            window.Snitcher.track('Free Trial Form Submitted', {
-                userId: userIdData,
-            });
-            console.log("Send user details successfully ",userIdData)
-           
-          }
-        )
-        
-        // window.addEventListener("load",function () {
-        //     var userIdData = generateUserId()
-        //     if (window.Snitcher && typeof window.Snitcher.track === 'function') {
-        //         window.Snitcher.track('Free Trial Form Submitted', {
-        //             userId: userIdData,
-        //         });
-        //         console.log("Send user details successfully ",userIdData)
-        //     }else{
-        //         console.log("Failed to send....")
-        //     }
-        // }
-        // )
-        // window.onload = function (){
-        //     var userIdData = generateUserId()
-        //     if (window.Snitcher && typeof window.Snitcher.track === 'function') {
-        //         window.Snitcher.track('Free Trial Form Submitted', {
-        //             userId: userIdData,
-        //         });
-        //         console.log("Send user details successfully ",userIdData)
-        //     }else{
-        //         console.log("Failed to send....")
-        //     }
-        // }
-        document.addEventListener('DOMContentLoaded', function () {
-            var form = document.getElementById('free-trial-form');
-            var btn = document.getElementById('detect_company_btn');
-            var display = document.getElementById('detected_company');
-            var visibleCompany = document.getElementById('visible_company');
-            var userIdField = document.getElementById('user_id');
-
-            if (!btn) return;
-            
-           
-           
-            if (form) {
-                form.addEventListener('submit', function (event) {
-                    event.preventDefault();
-
-                    var emailField = document.getElementById('email');
-                    var nameField = document.getElementById('name');
-                    var email = emailField ? emailField.value : '';
-                    var fullName = nameField ? nameField.value : '';
-                    var companyName = visibleCompany ? visibleCompany.value : '';
-                    var userId = userIdField && userIdField.value ? userIdField.value : generateUserId();
-
-                    if (userIdField) {
-                        userIdField.value = userId;
-                    }
-
-                    console.log('userId:', userId);
-
-                    console.log('Form submit intercepted for demo; no POST sent.');
+            window.Snitcher.ready(function () {
+                window.Snitcher.track('Free Trial Form Submitted', {
+                    userId: userIdData
                 });
-            }
+                console.log('Snitcher ready, event sent', userIdData);
+            });
         });
     </script>
 
