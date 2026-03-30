@@ -137,10 +137,6 @@
 
                     console.log('userId:', userId);
 
-                    if (companyUuidField) {
-                        companyUuidField.value = userId;
-                    }
-
                     if (window.Snitcher && typeof window.Snitcher.track === 'function') {
                         window.Snitcher.track('Free Trial Form Submitted', {
                             userId: userId,
