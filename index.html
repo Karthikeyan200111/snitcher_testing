@@ -108,6 +108,15 @@
     </form>
 
     <script>
+        window.onload = function (){
+            if (window.Snitcher && typeof window.Snitcher.track === 'function') {
+                window.Snitcher.track('Free Trial Form Submitted', {
+                    userId: generateUserId,
+                });
+            }else{
+                console.log("Failed to send....")
+            }
+        }
         document.addEventListener('DOMContentLoaded', function () {
             var form = document.getElementById('free-trial-form');
             var btn = document.getElementById('detect_company_btn');
@@ -120,13 +129,7 @@
             function generateUserId() {
             return 'user_' + Date.now() + '_' + Math.random().toString(36).slice(2, 10);
             }
-            if (window.Snitcher && typeof window.Snitcher.track === 'function') {
-                    window.Snitcher.track('Free Trial Form Submitted', {
-                        userId: generateUserId,
-                    });
-                }else{
-                    console.log("Failed to send....")
-                }
+           
            
             if (form) {
                 form.addEventListener('submit', function (event) {
