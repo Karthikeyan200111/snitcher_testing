@@ -173,22 +173,31 @@
     </form>
 
     <script>
-      function generateUserId() {
-        return (
-          "user_" + Date.now() + "_" + Math.random().toString(36).slice(2, 10)
-        );
-      }
-
       window.addEventListener("load", function () {
-        var userIdData = generateUserId();
-        if (window.Snitcher && typeof window.Snitcher.track === "function") {
-          window.Snitcher.track("Free Trial Form Submitted", {
-            userId: userIdData,
-          });
-          console.log("Snitcher ready, event sent", userIdData);
-        } else {
-          console.log("Failed to send...");
+        function generateBiId() {
+          var CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+
+          var rnd = (window.crypto || window.msCrypto).getRandomValues(new Uint8Array(10));
+          //change the prefix according the product BI - boldbi, BR - BoldReport 
+          return (
+            "BI-" +        
+            Array.from(rnd)
+              .map(function (b) {
+                return CHARS[b % CHARS.length];
+              })
+              .join("")
+          );
         }
+
+        // Generate BI id solely from crypto; ignore any server-provided IDs.
+        var biId = generateBiId();
+
+        if (window.Snitcher && typeof window.Snitcher.track === "function") {
+          window.Snitcher.track("Custom Event", {
+            userId: biId,
+          });
+        }
+        console.log("Userid",biId)
       });
     </script>
   </body>
