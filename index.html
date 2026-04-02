@@ -175,29 +175,58 @@
     <script>
       window.addEventListener("load", function () {
         function generateBiId() {
-          var CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+          var PREFIX = "BI";
+          var TOTAL_LEN = 16;
+          var SUFFIX_LEN = TOTAL_LEN - PREFIX.length; // 14
 
-          var rnd = (window.crypto || window.msCrypto).getRandomValues(new Uint8Array(10));
-          //change the prefix according the product BI - boldbi, BR - BoldReport 
-          return (
-            "BI-" +        
-            Array.from(rnd)
-              .map(function (b) {
-                return CHARS[b % CHARS.length];
-              })
-              .join("")
-          );
+          // Timestamp first (8 base36 chars) + 6 crypto base36 chars
+          var timestampPart = Date.now().toString(36).toUpperCase().padStart(8, "0");
+
+          var cryptoLen = SUFFIX_LEN - timestampPart.length; // should be 6
+          var cryptoPart = "";
+          try {
+            var bytes = new Uint8Array(cryptoLen);
+            (window.crypto || window.msCrypto).getRandomValues(bytes);
+            var chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            for (var i = 0; i < bytes.length; i++) {
+              cryptoPart += chars[bytes[i] % 36];
+            }
+          } catch (e) {
+            // fallback to Math.random if crypto unavailable
+            var chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            for (var j = 0; j < cryptoLen; j++) {
+              cryptoPart += chars[Math.floor(Math.random() * 36)];
+            }
+          }
+
+          var suffix = (timestampPart + cryptoPart).slice(0, SUFFIX_LEN);
+          return PREFIX + suffix;
         }
 
-        // Generate BI id solely from crypto; ignore any server-provided IDs.
+        // Generate BI id (time-only) and separately decrypt/console the timestamp
         var biId = generateBiId();
+
+        function decryptBiId(id) {
+          if (!id || id.indexOf("BI") !== 0) return null;
+          var suffix = id.slice(2).toUpperCase();
+          if (suffix.length !== 14) return null;
+          // timestamp is the first 8 chars
+          var tsPart = suffix.slice(0, 8);
+          var ms = parseInt(tsPart, 36);
+          if (isNaN(ms)) return null;
+          return new Date(ms);
+        }
+
+        var decrypted = decryptBiId(biId);
 
         if (window.Snitcher && typeof window.Snitcher.track === "function") {
           window.Snitcher.track("Custom Event", {
             userId: biId,
           });
         }
-        console.log("Userid",biId)
+
+        console.log("Userid", biId);
+        console.log("Decrypted BI timestamp:", decrypted);
       });
     </script>
   </body>
